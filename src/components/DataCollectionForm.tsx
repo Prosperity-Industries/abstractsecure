@@ -102,7 +102,7 @@ const DataCollectionForm = () => {
   const handleNext = () => {
     if (currentStep < totalSteps) {
       setCurrentStep(prev => prev + 1);
-    } else {
+    } else if (formData.hasAdditionalParties === 'no') {
       handleSubmit();
     }
   };
