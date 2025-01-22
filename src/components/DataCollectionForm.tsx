@@ -27,10 +27,20 @@ const DataCollectionForm = () => {
   const [totalSteps, setTotalSteps] = useState(1);
   const [formData, setFormData] = useState<FormData>({
     hasAdditionalParties: 'no',
-    additionalParties: []
+    additionalParties: [{
+      name: '',
+      phone: '',
+      email: '',
+      dateOfBirth: '',
+      ssn: '',
+      maritalStatus: ''
+    }]
   });
 
   const handleNext = () => {
+    if (formData.hasAdditionalParties === 'yes' && currentStep === totalSteps) {
+      addNewAdditionalParty();
+    }
     setCurrentStep(prev => prev + 1);
   };
 
