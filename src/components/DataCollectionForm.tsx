@@ -17,6 +17,7 @@ interface FormData {
   dateOfBirth: string;
   ssn: string;
   maritalStatus: string;
+  roleInTransaction: string;
 }
 
 const DataCollectionForm = () => {
@@ -28,6 +29,7 @@ const DataCollectionForm = () => {
     dateOfBirth: '',
     ssn: '',
     maritalStatus: '',
+    roleInTransaction: '',
   });
 
   const totalSteps = 2;
@@ -45,15 +47,15 @@ const DataCollectionForm = () => {
     }));
   };
 
-  const handleSelectChange = (value: string) => {
+  const handleSelectChange = (value: string, field: keyof FormData) => {
     setFormData(prev => ({
       ...prev,
-      maritalStatus: value
+      [field]: value
     }));
     
     localStorage.setItem('formData', JSON.stringify({
       ...formData,
-      maritalStatus: value
+      [field]: value
     }));
   };
 
@@ -128,6 +130,19 @@ const DataCollectionForm = () => {
                     required
                   />
                 </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="roleInTransaction">Role in Transaction</Label>
+                  <Select onValueChange={(value) => handleSelectChange(value, 'roleInTransaction')} value={formData.roleInTransaction}>
+                    <SelectTrigger className="w-full">
+                      <SelectValue placeholder="Select your role" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="buyer">Buyer</SelectItem>
+                      <SelectItem value="seller">Seller</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
               </div>
             </FormStep>
           )}
@@ -172,7 +187,7 @@ const DataCollectionForm = () => {
 
                 <div className="space-y-2">
                   <Label htmlFor="maritalStatus">Marital Status</Label>
-                  <Select onValueChange={handleSelectChange} value={formData.maritalStatus}>
+                  <Select onValueChange={(value) => handleSelectChange(value, 'maritalStatus')} value={formData.maritalStatus}>
                     <SelectTrigger className="w-full">
                       <SelectValue placeholder="Select marital status" />
                     </SelectTrigger>
