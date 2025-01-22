@@ -5,25 +5,19 @@ import FormStep from './FormStep';
 import { useToast } from "@/components/ui/use-toast";
 
 interface FormData {
-  name: string;
-  email: string;
-  phone: string;
-  company: string;
-  message: string;
+  fullName: string;
+  propertyAddress: string;
 }
 
 const DataCollectionForm = () => {
   const { toast } = useToast();
   const [currentStep, setCurrentStep] = useState(1);
   const [formData, setFormData] = useState<FormData>({
-    name: '',
-    email: '',
-    phone: '',
-    company: '',
-    message: ''
+    fullName: '',
+    propertyAddress: '',
   });
 
-  const totalSteps = 3;
+  const totalSteps = 1;
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
@@ -32,7 +26,6 @@ const DataCollectionForm = () => {
       [name]: value
     }));
     
-    // Save to localStorage
     localStorage.setItem('formData', JSON.stringify({
       ...formData,
       [name]: value
@@ -54,118 +47,63 @@ const DataCollectionForm = () => {
   };
 
   const handleSubmit = () => {
-    // Here you would typically send the data to your backend
     console.log('Form submitted:', formData);
     toast({
       title: "Success!",
       description: "Your information has been submitted successfully.",
     });
-    // Clear localStorage
     localStorage.removeItem('formData');
   };
 
-  const renderStep = () => {
-    switch (currentStep) {
-      case 1:
-        return (
-          <FormStep
-            title="Personal Information"
-            currentStep={currentStep}
-            totalSteps={totalSteps}
-            onNext={handleNext}
-            onPrevious={handlePrevious}
-          >
-            <div className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="name">Full Name</Label>
-                <Input
-                  id="name"
-                  name="name"
-                  value={formData.name}
-                  onChange={handleInputChange}
-                  placeholder="John Doe"
-                  required
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="email">Email</Label>
-                <Input
-                  id="email"
-                  name="email"
-                  type="email"
-                  value={formData.email}
-                  onChange={handleInputChange}
-                  placeholder="john@example.com"
-                  required
-                />
-              </div>
-            </div>
-          </FormStep>
-        );
-      case 2:
-        return (
-          <FormStep
-            title="Contact Details"
-            currentStep={currentStep}
-            totalSteps={totalSteps}
-            onNext={handleNext}
-            onPrevious={handlePrevious}
-          >
-            <div className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="phone">Phone Number</Label>
-                <Input
-                  id="phone"
-                  name="phone"
-                  value={formData.phone}
-                  onChange={handleInputChange}
-                  placeholder="+1 (555) 000-0000"
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="company">Company</Label>
-                <Input
-                  id="company"
-                  name="company"
-                  value={formData.company}
-                  onChange={handleInputChange}
-                  placeholder="Company Name"
-                />
-              </div>
-            </div>
-          </FormStep>
-        );
-      case 3:
-        return (
-          <FormStep
-            title="Additional Information"
-            currentStep={currentStep}
-            totalSteps={totalSteps}
-            onNext={handleNext}
-            onPrevious={handlePrevious}
-          >
-            <div className="space-y-2">
-              <Label htmlFor="message">Message</Label>
-              <Input
-                id="message"
-                name="message"
-                value={formData.message}
-                onChange={handleInputChange}
-                placeholder="Any additional information..."
-              />
-            </div>
-          </FormStep>
-        );
-      default:
-        return null;
-    }
-  };
-
   return (
-    <div className="min-h-screen flex items-center justify-center p-4">
-      <div className="form-container w-full max-w-2xl">
-        <div className="animate-fade-in">
-          {renderStep()}
+    <div className="min-h-screen flex flex-col items-center justify-start p-4 bg-gradient-to-b from-blue-50 to-white">
+      <div className="w-full max-w-2xl">
+        <img 
+          src="/lovable-uploads/9bc23bef-595f-421b-a79f-1507d53446b6.png" 
+          alt="Prosperity Abstract Logo" 
+          className="w-full max-w-md mx-auto mb-12"
+        />
+        
+        <p className="text-center text-lg text-blue-700 font-light mb-12 leading-relaxed">
+          Welcome to Prosperity Abstract's secure web page. The information submitted here will be encrypted and stored in our systems with care.
+        </p>
+
+        <div className="form-container">
+          <FormStep
+            title="Property Information"
+            currentStep={currentStep}
+            totalSteps={totalSteps}
+            onNext={handleNext}
+            onPrevious={handlePrevious}
+          >
+            <div className="space-y-6">
+              <div className="space-y-2">
+                <Label htmlFor="fullName">Full Name</Label>
+                <Input
+                  id="fullName"
+                  name="fullName"
+                  value={formData.fullName}
+                  onChange={handleInputChange}
+                  placeholder="Enter your full name"
+                  className="w-full"
+                  required
+                />
+              </div>
+              
+              <div className="space-y-2">
+                <Label htmlFor="propertyAddress">Address of Property Being Sold</Label>
+                <Input
+                  id="propertyAddress"
+                  name="propertyAddress"
+                  value={formData.propertyAddress}
+                  onChange={handleInputChange}
+                  placeholder="Enter the property address"
+                  className="w-full"
+                  required
+                />
+              </div>
+            </div>
+          </FormStep>
         </div>
       </div>
     </div>
