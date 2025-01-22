@@ -44,7 +44,7 @@ const FormStep: React.FC<FormStepProps> = ({
           Previous
         </Button>
         <Button onClick={onNext}>
-          Next
+          {currentStep === totalSteps && formData?.hasAdditionalParties !== 'yes' ? "Submit" : "Next"}
         </Button>
       </div>
     </Card>

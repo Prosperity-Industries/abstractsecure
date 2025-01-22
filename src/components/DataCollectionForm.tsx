@@ -46,7 +46,7 @@ const DataCollectionForm = () => {
   });
 
   const totalSteps = formData.hasAdditionalParties === 'yes' 
-    ? 3 + formData.additionalParties.length + 1
+    ? 3 + formData.additionalParties.length
     : 3;
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
@@ -101,6 +101,14 @@ const DataCollectionForm = () => {
 
   const handleNext = () => {
     if (currentStep < totalSteps) {
+      // If we're on an additional party page and "Yes" was selected
+      if (currentStep > 3 && formData.hasAdditionalParties === 'yes') {
+        // Add a new party if we don't already have one for the next step
+        const currentPartyIndex = currentStep - 4;
+        if (currentPartyIndex === formData.additionalParties.length - 1) {
+          addNewAdditionalParty();
+        }
+      }
       setCurrentStep(prev => prev + 1);
     } else if (formData.hasAdditionalParties === 'no') {
       handleSubmit();
