@@ -59,7 +59,7 @@ const DataCollectionForm = () => {
     <div className="min-h-screen flex flex-col items-center justify-start p-4 bg-gradient-to-b from-blue-50 to-white">
       <div className="w-full max-w-2xl">
         <img 
-          src="/lovable-uploads/2d60689e-74f1-49d3-9ea4-c19b1c0707be.png" 
+          src="/lovable-uploads/b5f84e95-837e-4ccc-ace0-b9ff6ad926ec.png" 
           alt="Prosperity Abstract Logo" 
           className="w-full max-w-md mx-auto mb-12"
         />
