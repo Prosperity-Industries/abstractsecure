@@ -9,6 +9,9 @@ interface FormStepProps {
   totalSteps: number;
   onNext: () => void;
   onPrevious: () => void;
+  formData: {
+    hasAdditionalParties: string;
+  };
 }
 
 const FormStep: React.FC<FormStepProps> = ({
@@ -17,7 +20,8 @@ const FormStep: React.FC<FormStepProps> = ({
   currentStep,
   totalSteps,
   onNext,
-  onPrevious
+  onPrevious,
+  formData
 }) => {
   return (
     <Card className="w-full p-6 space-y-6 bg-white/90 backdrop-blur-sm">
