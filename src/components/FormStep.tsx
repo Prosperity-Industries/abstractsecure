@@ -2,18 +2,6 @@ import React from 'react';
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 
-interface FormData {
-  hasAdditionalParties: string;
-  additionalParties: Array<{
-    name: string;
-    phone: string;
-    email: string;
-    dateOfBirth: string;
-    ssn: string;
-    maritalStatus: string;
-  }>;
-}
-
 interface FormStepProps {
   title: string;
   children: React.ReactNode;
@@ -21,7 +9,6 @@ interface FormStepProps {
   totalSteps: number;
   onNext: () => void;
   onPrevious: () => void;
-  formData: FormData;
 }
 
 const FormStep: React.FC<FormStepProps> = ({
@@ -30,8 +17,7 @@ const FormStep: React.FC<FormStepProps> = ({
   currentStep,
   totalSteps,
   onNext,
-  onPrevious,
-  formData
+  onPrevious
 }) => {
   return (
     <Card className="w-full p-6 space-y-6 bg-white/90 backdrop-blur-sm">
@@ -58,7 +44,7 @@ const FormStep: React.FC<FormStepProps> = ({
           Previous
         </Button>
         <Button onClick={onNext}>
-          {currentStep === totalSteps && formData.hasAdditionalParties !== 'yes' ? "Submit" : "Next"}
+          Next
         </Button>
       </div>
     </Card>
