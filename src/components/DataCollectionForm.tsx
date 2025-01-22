@@ -1,4 +1,80 @@
-const renderAdditionalPartyForm = (index: number) => {
+import React, { useState } from 'react';
+import FormStep from './FormStep';
+import { Label } from "@/components/ui/label";
+import { Input } from "@/components/ui/input";
+import { 
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+
+interface FormData {
+  hasAdditionalParties: string;
+  additionalParties: Array<{
+    name: string;
+    phone: string;
+    email: string;
+    dateOfBirth: string;
+    ssn: string;
+    maritalStatus: string;
+  }>;
+}
+
+const DataCollectionForm = () => {
+  const [currentStep, setCurrentStep] = useState(1);
+  const [totalSteps, setTotalSteps] = useState(1);
+  const [formData, setFormData] = useState<FormData>({
+    hasAdditionalParties: 'no',
+    additionalParties: []
+  });
+
+  const handleNext = () => {
+    setCurrentStep(prev => prev + 1);
+  };
+
+  const handlePrevious = () => {
+    setCurrentStep(prev => prev - 1);
+  };
+
+  const handleAdditionalPartyInputChange = (index: number, field: string, value: string) => {
+    setFormData(prev => {
+      const newAdditionalParties = [...prev.additionalParties];
+      newAdditionalParties[index] = {
+        ...newAdditionalParties[index],
+        [field]: value
+      };
+      return {
+        ...prev,
+        additionalParties: newAdditionalParties
+      };
+    });
+  };
+
+  const handleAdditionalPartySelectChange = (index: number, value: string, field: string) => {
+    handleAdditionalPartyInputChange(index, field, value);
+  };
+
+  const handleSelectChange = (value: string, field: string) => {
+    setFormData(prev => ({
+      ...prev,
+      [field]: value
+    }));
+  };
+
+  const addNewAdditionalParty = () => {
+    setFormData(prev => ({
+      ...prev,
+      additionalParties: [
+        ...prev.additionalParties,
+        { name: '', phone: '', email: '', dateOfBirth: '', ssn: '', maritalStatus: '' }
+      ]
+    }));
+    setTotalSteps(prev => prev + 1);
+  };
+
+  const renderAdditionalPartyForm = (index: number) => {
     const partyNumber = index + 1;
     return (
       <FormStep
@@ -116,3 +192,8 @@ const renderAdditionalPartyForm = (index: number) => {
       </FormStep>
     );
   };
+
+  return renderAdditionalPartyForm(currentStep - 1);
+};
+
+export default DataCollectionForm;
