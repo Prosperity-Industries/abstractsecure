@@ -3,10 +3,20 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import FormStep from './FormStep';
 import { useToast } from "@/components/ui/use-toast";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 interface FormData {
   fullName: string;
   propertyAddress: string;
+  dateOfBirth: string;
+  ssn: string;
+  maritalStatus: string;
 }
 
 const DataCollectionForm = () => {
@@ -15,9 +25,12 @@ const DataCollectionForm = () => {
   const [formData, setFormData] = useState<FormData>({
     fullName: '',
     propertyAddress: '',
+    dateOfBirth: '',
+    ssn: '',
+    maritalStatus: '',
   });
 
-  const totalSteps = 1;
+  const totalSteps = 2;
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
@@ -29,6 +42,18 @@ const DataCollectionForm = () => {
     localStorage.setItem('formData', JSON.stringify({
       ...formData,
       [name]: value
+    }));
+  };
+
+  const handleSelectChange = (value: string) => {
+    setFormData(prev => ({
+      ...prev,
+      maritalStatus: value
+    }));
+    
+    localStorage.setItem('formData', JSON.stringify({
+      ...formData,
+      maritalStatus: value
     }));
   };
 
@@ -69,41 +94,99 @@ const DataCollectionForm = () => {
         </p>
 
         <div className="form-container">
-          <FormStep
-            title="Property Information"
-            currentStep={currentStep}
-            totalSteps={totalSteps}
-            onNext={handleNext}
-            onPrevious={handlePrevious}
-          >
-            <div className="space-y-6">
-              <div className="space-y-2">
-                <Label htmlFor="fullName">Full Name</Label>
-                <Input
-                  id="fullName"
-                  name="fullName"
-                  value={formData.fullName}
-                  onChange={handleInputChange}
-                  placeholder="Enter your full name"
-                  className="w-full"
-                  required
-                />
+          {currentStep === 1 && (
+            <FormStep
+              title="Property Information"
+              currentStep={currentStep}
+              totalSteps={totalSteps}
+              onNext={handleNext}
+              onPrevious={handlePrevious}
+            >
+              <div className="space-y-6">
+                <div className="space-y-2">
+                  <Label htmlFor="fullName">Full Name</Label>
+                  <Input
+                    id="fullName"
+                    name="fullName"
+                    value={formData.fullName}
+                    onChange={handleInputChange}
+                    placeholder="Enter your full name"
+                    className="w-full"
+                    required
+                  />
+                </div>
+                
+                <div className="space-y-2">
+                  <Label htmlFor="propertyAddress">Address of Property Being Sold</Label>
+                  <Input
+                    id="propertyAddress"
+                    name="propertyAddress"
+                    value={formData.propertyAddress}
+                    onChange={handleInputChange}
+                    placeholder="Enter the property address"
+                    className="w-full"
+                    required
+                  />
+                </div>
               </div>
-              
-              <div className="space-y-2">
-                <Label htmlFor="propertyAddress">Address of Property Being Sold</Label>
-                <Input
-                  id="propertyAddress"
-                  name="propertyAddress"
-                  value={formData.propertyAddress}
-                  onChange={handleInputChange}
-                  placeholder="Enter the property address"
-                  className="w-full"
-                  required
-                />
+            </FormStep>
+          )}
+
+          {currentStep === 2 && (
+            <FormStep
+              title="Personal Information"
+              currentStep={currentStep}
+              totalSteps={totalSteps}
+              onNext={handleNext}
+              onPrevious={handlePrevious}
+            >
+              <div className="space-y-6">
+                <div className="space-y-2">
+                  <Label htmlFor="dateOfBirth">Date of Birth</Label>
+                  <Input
+                    id="dateOfBirth"
+                    name="dateOfBirth"
+                    type="date"
+                    value={formData.dateOfBirth}
+                    onChange={handleInputChange}
+                    className="w-full"
+                    required
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="ssn">SSN</Label>
+                  <Input
+                    id="ssn"
+                    name="ssn"
+                    type="password"
+                    value={formData.ssn}
+                    onChange={handleInputChange}
+                    placeholder="Enter your SSN"
+                    className="w-full"
+                    required
+                    maxLength={9}
+                    pattern="\d{9}"
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="maritalStatus">Marital Status</Label>
+                  <Select onValueChange={handleSelectChange} value={formData.maritalStatus}>
+                    <SelectTrigger className="w-full">
+                      <SelectValue placeholder="Select marital status" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="single">Single</SelectItem>
+                      <SelectItem value="married">Married</SelectItem>
+                      <SelectItem value="divorced">Divorced</SelectItem>
+                      <SelectItem value="widowed">Widowed</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
               </div>
-            </div>
-          </FormStep>
+            </FormStep>
+          )}
         </div>
       </div>
     </div>
