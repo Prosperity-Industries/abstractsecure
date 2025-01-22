@@ -18,6 +18,7 @@ interface FormData {
   ssn: string;
   maritalStatus: string;
   roleInTransaction: string;
+  hasAdditionalParties: string;
 }
 
 const DataCollectionForm = () => {
@@ -30,9 +31,10 @@ const DataCollectionForm = () => {
     ssn: '',
     maritalStatus: '',
     roleInTransaction: '',
+    hasAdditionalParties: '',
   });
 
-  const totalSteps = 2;
+  const totalSteps = 3;
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
@@ -196,6 +198,36 @@ const DataCollectionForm = () => {
                       <SelectItem value="married">Married</SelectItem>
                       <SelectItem value="divorced">Divorced</SelectItem>
                       <SelectItem value="widowed">Widowed</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+            </FormStep>
+          )}
+
+          {currentStep === 3 && (
+            <FormStep
+              title="Additional Parties"
+              currentStep={currentStep}
+              totalSteps={totalSteps}
+              onNext={handleNext}
+              onPrevious={handlePrevious}
+            >
+              <div className="space-y-6">
+                <div className="space-y-2">
+                  <Label htmlFor="hasAdditionalParties">
+                    Are there additional parties as {formData.roleInTransaction}?
+                  </Label>
+                  <Select 
+                    onValueChange={(value) => handleSelectChange(value, 'hasAdditionalParties')} 
+                    value={formData.hasAdditionalParties}
+                  >
+                    <SelectTrigger className="w-full">
+                      <SelectValue placeholder="Select yes or no" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="yes">Yes</SelectItem>
+                      <SelectItem value="no">No</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
