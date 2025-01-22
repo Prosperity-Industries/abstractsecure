@@ -66,7 +66,14 @@ const DataCollectionForm = () => {
     setFormData(prev => {
       const updatedParties = [...prev.additionalParties];
       updatedParties[index] = {
-        ...updatedParties[index] || {},
+        ...updatedParties[index] || {
+          name: '',
+          phone: '',
+          email: '',
+          dateOfBirth: '',
+          ssn: '',
+          maritalStatus: ''
+        },
         [field]: value
       };
       return {
@@ -113,6 +120,23 @@ const DataCollectionForm = () => {
       description: "Your information has been submitted successfully.",
     });
     localStorage.removeItem('formData');
+  };
+
+  const addNewAdditionalParty = () => {
+    setFormData(prev => ({
+      ...prev,
+      additionalParties: [
+        ...prev.additionalParties,
+        {
+          name: '',
+          phone: '',
+          email: '',
+          dateOfBirth: '',
+          ssn: '',
+          maritalStatus: ''
+        }
+      ]
+    }));
   };
 
   const renderAdditionalPartyForm = (index: number) => {
@@ -213,10 +237,7 @@ const DataCollectionForm = () => {
             <Select 
               onValueChange={(value) => {
                 if (value === 'yes') {
-                  setFormData(prev => ({
-                    ...prev,
-                    additionalParties: [...prev.additionalParties, {}]
-                  }));
+                  addNewAdditionalParty();
                 }
                 handleSelectChange(value, 'hasAdditionalParties');
               }} 
@@ -371,7 +392,12 @@ const DataCollectionForm = () => {
                     Are there additional parties as {formData.roleInTransaction}?
                   </Label>
                   <Select 
-                    onValueChange={(value) => handleSelectChange(value, 'hasAdditionalParties')} 
+                    onValueChange={(value) => {
+                      if (value === 'yes') {
+                        addNewAdditionalParty();
+                      }
+                      handleSelectChange(value, 'hasAdditionalParties');
+                    }} 
                     value={formData.hasAdditionalParties}
                   >
                     <SelectTrigger className="w-full">
