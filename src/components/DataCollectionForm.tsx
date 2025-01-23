@@ -128,8 +128,8 @@ const DataCollectionForm = () => {
   };
 
   const handleNext = () => {
-    // If we're on an additional party page
-    if (currentStep > 3 && currentStep < totalSteps) {
+    // If we're on an additional party page and there are additional parties
+    if (currentStep > 3 && currentStep < totalSteps - 1 && formData.hasAdditionalParties === 'yes') {
       const currentPartyIndex = currentStep - 4;
       
       // Validate current party's required fields
@@ -166,7 +166,7 @@ const DataCollectionForm = () => {
       } 
       // If they don't want more parties or reached max, go to property management page
       else {
-        setCurrentStep(totalSteps);
+        setCurrentStep(totalSteps - 1); // Go to property management page
       }
     }
     // For all other steps
