@@ -248,6 +248,8 @@ const DataCollectionForm = () => {
         }
       };
 
+      console.log('Submitting data to webhook:', submissionData);
+
       // Send data to webhook
       const response = await fetch('https://hook.us2.make.com/kwq1swnwft87fv4fxclyxbq2x5wcu5pt', {
         method: 'POST',
@@ -257,9 +259,14 @@ const DataCollectionForm = () => {
         body: JSON.stringify(submissionData)
       });
 
+      console.log('Webhook response:', response);
+
       if (!response.ok) {
-        throw new Error('Submission failed');
+        throw new Error(`Submission failed: ${response.status} ${response.statusText}`);
       }
+
+      const responseData = await response.text();
+      console.log('Webhook response data:', responseData);
 
       // Show success message
       toast({
