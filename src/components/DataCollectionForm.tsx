@@ -10,6 +10,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { loadTestData } from '@/utils/tempTestData';
 
 interface AdditionalParty {
   name: string;
@@ -36,17 +37,32 @@ interface FormData {
 const DataCollectionForm = () => {
   const { toast } = useToast();
   const [currentStep, setCurrentStep] = useState(1);
-  const [formData, setFormData] = useState<FormData>({
-    fullName: '',
-    propertyAddress: '',
-    dateOfBirth: '',
-    ssn: '',
-    maritalStatus: '',
-    roleInTransaction: '',
-    hasAdditionalParties: '',
-    additionalParties: [],
-    interestedInPropertyManagement: '',
-    interestedInInsuranceQuote: '',
+  const [formData, setFormData] = useState<FormData>(() => {
+    // Try to load from localStorage first
+    const savedData = localStorage.getItem('formData');
+    if (savedData) {
+      return JSON.parse(savedData);
+    }
+
+    // If no saved data, check for test data in development
+    const testData = loadTestData();
+    if (testData) {
+      return testData;
+    }
+
+    // If no saved or test data, use empty values
+    return {
+      fullName: '',
+      propertyAddress: '',
+      dateOfBirth: '',
+      ssn: '',
+      maritalStatus: '',
+      roleInTransaction: '',
+      hasAdditionalParties: '',
+      additionalParties: [],
+      interestedInPropertyManagement: '',
+      interestedInInsuranceQuote: ''
+    };
   });
 
   const totalSteps = formData.hasAdditionalParties === 'yes' 
