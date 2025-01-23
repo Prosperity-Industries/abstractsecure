@@ -128,6 +128,12 @@ const DataCollectionForm = () => {
   };
 
   const handleNext = () => {
+    // If we're on the final step (insurance quote), handle submission
+    if (currentStep === totalSteps) {
+      handleSubmit();
+      return;
+    }
+
     // If we're on the initial additional party question (step 3)
     if (currentStep === 3) {
       if (formData.hasAdditionalParties === 'yes') {
@@ -186,8 +192,98 @@ const DataCollectionForm = () => {
       return;
     }
 
-    // For all other steps (1, 2, and final)
+    // For all other steps (1, 2)
     setCurrentStep(prev => prev + 1);
+  };
+
+  const handleSubmit = async () => {
+    try {
+      // Show loading toast
+      toast({
+        title: "Submitting...",
+        description: "Please wait while we process your information.",
+      });
+
+      // Prepare the data for submission
+      const submissionData = {
+        propertyInformation: {
+          fullName: formData.fullName,
+          propertyAddress: formData.propertyAddress,
+          roleInTransaction: formData.roleInTransaction
+        },
+        personalInformation: {
+          dateOfBirth: formData.dateOfBirth,
+          ssn: formData.ssn,
+          maritalStatus: formData.maritalStatus
+        },
+        additionalParties: formData.hasAdditionalParties === 'yes' 
+          ? formData.additionalParties.map(party => ({
+              name: party.name,
+              phone: party.phone,
+              email: party.email,
+              dateOfBirth: party.dateOfBirth,
+              ssn: party.ssn,
+              maritalStatus: party.maritalStatus
+            }))
+          : [],
+        services: {
+          interestedInPropertyManagement: formData.interestedInPropertyManagement,
+          interestedInInsuranceQuote: formData.interestedInInsuranceQuote
+        },
+        metadata: {
+          submissionDate: new Date().toISOString(),
+          formVersion: "1.0.0"
+        }
+      };
+
+      // Send data to webhook
+      const response = await fetch('https://hook.us2.make.com/kwq1swnwft87fv4fxclyxbq2x5wcu5pt', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(submissionData)
+      });
+
+      if (!response.ok) {
+        throw new Error('Submission failed');
+      }
+
+      // Show success message
+      toast({
+        title: "Success!",
+        description: "Your information has been submitted successfully.",
+        variant: "default"
+      });
+
+      // Clear form data from localStorage
+      localStorage.removeItem('formData');
+
+      // Reset form to initial state
+      setFormData({
+        fullName: '',
+        propertyAddress: '',
+        dateOfBirth: '',
+        ssn: '',
+        maritalStatus: '',
+        roleInTransaction: '',
+        hasAdditionalParties: '',
+        additionalParties: [],
+        interestedInPropertyManagement: '',
+        interestedInInsuranceQuote: ''
+      });
+
+      // Return to first step
+      setCurrentStep(1);
+
+    } catch (error) {
+      console.error('Submission error:', error);
+      toast({
+        title: "Error",
+        description: "There was a problem submitting your information. Please try again.",
+        variant: "destructive"
+      });
+    }
   };
 
   const handlePrevious = () => {
