@@ -82,7 +82,7 @@ const DataCollectionForm = () => {
     }));
   };
 
-  const handleAdditionalPartyInputChange = (index: number, field: keyof AdditionalParty, value: string) => {
+  const handleAdditionalPartyChange = (index: number, field: keyof AdditionalParty, value: string) => {
     setFormData(prev => {
       const updatedParties = [...prev.additionalParties];
       updatedParties[index] = {
@@ -137,10 +137,6 @@ const DataCollectionForm = () => {
       ...formData,
       [field]: value
     }));
-  };
-
-  const handleAdditionalPartySelectChange = (index: number, value: string, field: keyof AdditionalParty) => {
-    handleAdditionalPartyInputChange(index, field, value);
   };
 
   const handleNext = () => {
@@ -341,7 +337,7 @@ const DataCollectionForm = () => {
             <Input
               id={`party${partyNumber}Name`}
               value={formData.additionalParties[index]?.name || ''}
-              onChange={(e) => handleAdditionalPartyInputChange(index, 'name', e.target.value)}
+              onChange={(e) => handleAdditionalPartyChange(index, 'name', e.target.value)}
               placeholder="Enter full name"
               className="w-full"
               required
@@ -353,7 +349,7 @@ const DataCollectionForm = () => {
             <Input
               id={`party${partyNumber}Phone`}
               value={formData.additionalParties[index]?.phone || ''}
-              onChange={(e) => handleAdditionalPartyInputChange(index, 'phone', e.target.value)}
+              onChange={(e) => handleAdditionalPartyChange(index, 'phone', e.target.value)}
               placeholder="Enter phone number"
               className="w-full"
               required
@@ -366,7 +362,7 @@ const DataCollectionForm = () => {
               id={`party${partyNumber}Email`}
               type="email"
               value={formData.additionalParties[index]?.email || ''}
-              onChange={(e) => handleAdditionalPartyInputChange(index, 'email', e.target.value)}
+              onChange={(e) => handleAdditionalPartyChange(index, 'email', e.target.value)}
               placeholder="Enter email address"
               className="w-full"
               required
@@ -379,7 +375,7 @@ const DataCollectionForm = () => {
               id={`party${partyNumber}DOB`}
               type="date"
               value={formData.additionalParties[index]?.dateOfBirth || ''}
-              onChange={(e) => handleAdditionalPartyInputChange(index, 'dateOfBirth', e.target.value)}
+              onChange={(e) => handleAdditionalPartyChange(index, 'dateOfBirth', e.target.value)}
               className="w-full"
               required
             />
@@ -391,7 +387,7 @@ const DataCollectionForm = () => {
               id={`party${partyNumber}SSN`}
               type="password"
               value={formData.additionalParties[index]?.ssn || ''}
-              onChange={(e) => handleAdditionalPartyInputChange(index, 'ssn', e.target.value)}
+              onChange={(e) => handleAdditionalPartyChange(index, 'ssn', e.target.value)}
               placeholder="Enter SSN"
               className="w-full"
               required
@@ -403,7 +399,7 @@ const DataCollectionForm = () => {
           <div className="space-y-2">
             <Label htmlFor={`party${partyNumber}MaritalStatus`}>Additional Party #{partyNumber} Marital Status</Label>
             <Select 
-              onValueChange={(value) => handleAdditionalPartySelectChange(index, value, 'maritalStatus')} 
+              onValueChange={(value) => handleAdditionalPartyChange(index, 'maritalStatus', value)} 
               value={formData.additionalParties[index]?.maritalStatus || ''}
             >
               <SelectTrigger className="w-full">
@@ -601,8 +597,117 @@ const DataCollectionForm = () => {
             </FormStep>
           )}
 
-          {currentStep > 3 && currentStep < totalSteps && formData.hasAdditionalParties === 'yes' && 
-            renderAdditionalPartyForm(currentStep - 4)}
+          {currentStep > 3 && currentStep < totalSteps - 1 && (
+            <FormStep
+              title={`Additional Party #${currentStep - 3}`}
+              currentStep={currentStep}
+              totalSteps={totalSteps}
+              onNext={handleNext}
+              onPrevious={handlePrevious}
+            >
+              <div className="space-y-6">
+                <div className="space-y-2">
+                  <Label htmlFor="name" className="text-base">
+                    Name
+                  </Label>
+                  <Input
+                    id="name"
+                    value={formData.additionalParties[currentStep - 4]?.name || ''}
+                    onChange={(e) => handleAdditionalPartyChange(currentStep - 4, 'name', e.target.value)}
+                    placeholder="Enter name"
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="phone" className="text-base">
+                    Phone Number
+                  </Label>
+                  <Input
+                    id="phone"
+                    value={formData.additionalParties[currentStep - 4]?.phone || ''}
+                    onChange={(e) => handleAdditionalPartyChange(currentStep - 4, 'phone', e.target.value)}
+                    placeholder="Enter phone number"
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="email" className="text-base">
+                    Email
+                  </Label>
+                  <Input
+                    id="email"
+                    value={formData.additionalParties[currentStep - 4]?.email || ''}
+                    onChange={(e) => handleAdditionalPartyChange(currentStep - 4, 'email', e.target.value)}
+                    placeholder="Enter email"
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="dateOfBirth" className="text-base">
+                    Date of Birth
+                  </Label>
+                  <Input
+                    id="dateOfBirth"
+                    value={formData.additionalParties[currentStep - 4]?.dateOfBirth || ''}
+                    onChange={(e) => handleAdditionalPartyChange(currentStep - 4, 'dateOfBirth', e.target.value)}
+                    placeholder="MM/DD/YYYY"
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="ssn" className="text-base">
+                    Social Security Number
+                  </Label>
+                  <Input
+                    id="ssn"
+                    value={formData.additionalParties[currentStep - 4]?.ssn || ''}
+                    onChange={(e) => handleAdditionalPartyChange(currentStep - 4, 'ssn', e.target.value)}
+                    placeholder="XXX-XX-XXXX"
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="maritalStatus" className="text-base">
+                    Marital Status
+                  </Label>
+                  <Select 
+                    onValueChange={(value) => handleAdditionalPartyChange(currentStep - 4, 'maritalStatus', value)}
+                    value={formData.additionalParties[currentStep - 4]?.maritalStatus || ''}
+                  >
+                    <SelectTrigger className="w-full">
+                      <SelectValue placeholder="Select marital status" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="single">Single</SelectItem>
+                      <SelectItem value="married">Married</SelectItem>
+                      <SelectItem value="divorced">Divorced</SelectItem>
+                      <SelectItem value="widowed">Widowed</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                {currentStep - 4 < 3 && (
+                  <div className="space-y-2">
+                    <Label htmlFor="hasAdditionalParties" className="text-base">
+                      Would you like to add another party?
+                    </Label>
+                    <Select 
+                      onValueChange={(value) => handleSelectChange(value, 'hasAdditionalParties')}
+                      value={formData.hasAdditionalParties}
+                    >
+                      <SelectTrigger className="w-full">
+                        <SelectValue placeholder="Select yes or no" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="yes">Yes</SelectItem>
+                        <SelectItem value="no">No</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                )}
+              </div>
+            </FormStep>
+          )}
 
           {currentStep === totalSteps - 1 && (
             <FormStep
