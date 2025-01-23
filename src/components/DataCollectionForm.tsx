@@ -109,8 +109,6 @@ const DataCollectionForm = () => {
         } else if (value === 'no') {
           // Clear additional parties if selecting 'no'
           newData.additionalParties = [];
-          // Skip to property management page
-          setTimeout(() => setCurrentStep(4), 0);
         }
       }
       
@@ -169,14 +167,9 @@ const DataCollectionForm = () => {
         setCurrentStep(totalSteps);
       }
     }
-    // For all other steps, including when on step 3 (additional party question)
+    // For all other steps
     else {
-      // If we're on step 3 and they selected 'no' for additional parties
-      if (currentStep === 3 && formData.hasAdditionalParties === 'no') {
-        setCurrentStep(4); // Skip to property management page
-      } else {
-        setCurrentStep(prev => prev + 1);
-      }
+      setCurrentStep(prev => prev + 1);
     }
   };
 
