@@ -128,8 +128,18 @@ const DataCollectionForm = () => {
   };
 
   const handleNext = () => {
-    // If we're on an additional party page and there are additional parties
-    if (currentStep > 3 && currentStep < totalSteps - 1 && formData.hasAdditionalParties === 'yes') {
+    // If we're on the initial additional party question (step 3)
+    if (currentStep === 3) {
+      if (formData.hasAdditionalParties === 'yes') {
+        setCurrentStep(4); // Go to first additional party
+      } else {
+        setCurrentStep(totalSteps - 1); // Go to property management
+      }
+      return;
+    }
+
+    // If we're on an additional party page
+    if (currentStep > 3 && currentStep < totalSteps - 1) {
       const currentPartyIndex = currentStep - 4;
       
       // Validate current party's required fields
@@ -163,16 +173,21 @@ const DataCollectionForm = () => {
           }));
         }
         setCurrentStep(prev => prev + 1);
-      } 
-      // If they don't want more parties or reached max, go to property management page
-      else {
-        setCurrentStep(totalSteps - 1); // Go to property management page
+      } else {
+        // If no more parties needed, go to property management
+        setCurrentStep(totalSteps - 1);
       }
+      return;
     }
-    // For all other steps
-    else {
-      setCurrentStep(prev => prev + 1);
+
+    // For property management page
+    if (currentStep === totalSteps - 1) {
+      setCurrentStep(totalSteps); // Go to insurance quote
+      return;
     }
+
+    // For all other steps (1, 2, and final)
+    setCurrentStep(prev => prev + 1);
   };
 
   const handlePrevious = () => {
