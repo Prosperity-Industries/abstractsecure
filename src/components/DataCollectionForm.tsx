@@ -30,6 +30,7 @@ interface FormData {
   hasAdditionalParties: string;
   additionalParties: AdditionalParty[];
   interestedInPropertyManagement: string;
+  interestedInInsuranceQuote: string;
 }
 
 const DataCollectionForm = () => {
@@ -45,11 +46,12 @@ const DataCollectionForm = () => {
     hasAdditionalParties: '',
     additionalParties: [],
     interestedInPropertyManagement: '',
+    interestedInInsuranceQuote: '',
   });
 
   const totalSteps = formData.hasAdditionalParties === 'yes' 
-    ? 4 + formData.additionalParties.length
-    : 4;
+    ? 5 + formData.additionalParties.length
+    : 5;
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
@@ -475,7 +477,7 @@ const DataCollectionForm = () => {
           {currentStep > 3 && currentStep < totalSteps && formData.hasAdditionalParties === 'yes' && 
             renderAdditionalPartyForm(currentStep - 4)}
 
-          {currentStep === totalSteps && (
+          {currentStep === totalSteps - 1 && (
             <FormStep
               title="Property Management Services"
               currentStep={currentStep}
@@ -491,6 +493,36 @@ const DataCollectionForm = () => {
                   <Select 
                     onValueChange={(value) => handleSelectChange(value, 'interestedInPropertyManagement')} 
                     value={formData.interestedInPropertyManagement}
+                  >
+                    <SelectTrigger className="w-full">
+                      <SelectValue placeholder="Select yes or no" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="yes">Yes</SelectItem>
+                      <SelectItem value="no">No</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+            </FormStep>
+          )}
+
+          {currentStep === totalSteps && (
+            <FormStep
+              title="Insurance Quote"
+              currentStep={currentStep}
+              totalSteps={totalSteps}
+              onNext={handleNext}
+              onPrevious={handlePrevious}
+            >
+              <div className="space-y-6">
+                <div className="space-y-2">
+                  <Label htmlFor="interestedInInsuranceQuote" className="text-base">
+                    Prosperity National Insurance Agency is our sister company and provides highly competitive rates and coverages. Would you like a free, no obligation property insurance quote?
+                  </Label>
+                  <Select 
+                    onValueChange={(value) => handleSelectChange(value, 'interestedInInsuranceQuote')} 
+                    value={formData.interestedInInsuranceQuote}
                   >
                     <SelectTrigger className="w-full">
                       <SelectValue placeholder="Select yes or no" />
