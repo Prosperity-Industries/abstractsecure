@@ -169,10 +169,6 @@ const DataCollectionForm = () => {
         setCurrentStep(totalSteps);
       }
     }
-    // If we're on the final step (property management)
-    else if (currentStep === totalSteps) {
-      handleSubmit();
-    }
     // For all other steps, including when on step 3 (additional party question)
     else {
       // If we're on step 3 and they selected 'no' for additional parties
@@ -188,15 +184,6 @@ const DataCollectionForm = () => {
     if (currentStep > 1) {
       setCurrentStep(prev => prev - 1);
     }
-  };
-
-  const handleSubmit = () => {
-    console.log('Form submitted:', formData);
-    toast({
-      title: "Success!",
-      description: "Your information has been submitted successfully.",
-    });
-    localStorage.removeItem('formData');
   };
 
   const addNewAdditionalParty = () => {
@@ -500,13 +487,13 @@ const DataCollectionForm = () => {
               title="Property Management Services"
               currentStep={currentStep}
               totalSteps={totalSteps}
-              onNext={handleSubmit}
+              onNext={handleNext}
               onPrevious={handlePrevious}
             >
               <div className="space-y-6">
                 <div className="space-y-2">
-                  <Label htmlFor="propertyManagement">
-                    Would you be interested in hearing about our property management services?
+                  <Label htmlFor="interestedInPropertyManagement">
+                    Are you interested in our property management services?
                   </Label>
                   <Select 
                     onValueChange={(value) => handleSelectChange(value, 'interestedInPropertyManagement')} 
