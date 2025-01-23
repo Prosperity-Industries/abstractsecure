@@ -9,6 +9,7 @@ interface FormStepProps {
   totalSteps: number;
   onNext: () => void;
   onPrevious: () => void;
+  nextButtonText?: string;
 }
 
 const FormStep: React.FC<FormStepProps> = ({
@@ -17,7 +18,8 @@ const FormStep: React.FC<FormStepProps> = ({
   currentStep,
   totalSteps,
   onNext,
-  onPrevious
+  onPrevious,
+  nextButtonText = "Next"
 }) => {
   return (
     <Card className="w-full p-6 space-y-6 bg-white/90 backdrop-blur-sm">
@@ -44,7 +46,7 @@ const FormStep: React.FC<FormStepProps> = ({
           Previous
         </Button>
         <Button onClick={onNext}>
-          Next
+          {nextButtonText}
         </Button>
       </div>
     </Card>

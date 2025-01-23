@@ -529,6 +529,7 @@ const DataCollectionForm = () => {
               totalSteps={totalSteps}
               onNext={handleNext}
               onPrevious={handlePrevious}
+              nextButtonText="Submit"
             >
               <div className="space-y-6">
                 <div className="space-y-2">
