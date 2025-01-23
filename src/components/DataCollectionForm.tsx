@@ -92,13 +92,11 @@ const DataCollectionForm = () => {
         [field]: value
       };
       
-      // If changing hasAdditionalParties to yes, add a new party if needed
-      if (field === 'hasAdditionalParties' && value === 'yes' && prev.additionalParties.length < 4) {
-        if (prev.additionalParties.length === 0 || 
-            (prev.additionalParties.length > 0 && 
-             prev.additionalParties[prev.additionalParties.length - 1].name !== '')) {
+      // If changing hasAdditionalParties
+      if (field === 'hasAdditionalParties') {
+        if (value === 'yes' && prev.additionalParties.length === 0) {
+          // Add first additional party if selecting 'yes'
           newData.additionalParties = [
-            ...prev.additionalParties,
             {
               name: '',
               phone: '',
@@ -108,6 +106,11 @@ const DataCollectionForm = () => {
               maritalStatus: ''
             }
           ];
+        } else if (value === 'no') {
+          // Clear additional parties if selecting 'no'
+          newData.additionalParties = [];
+          // Skip to property management page
+          setTimeout(() => setCurrentStep(4), 0);
         }
       }
       
@@ -170,9 +173,14 @@ const DataCollectionForm = () => {
     else if (currentStep === totalSteps) {
       handleSubmit();
     }
-    // For all other steps
+    // For all other steps, including when on step 3 (additional party question)
     else {
-      setCurrentStep(prev => prev + 1);
+      // If we're on step 3 and they selected 'no' for additional parties
+      if (currentStep === 3 && formData.hasAdditionalParties === 'no') {
+        setCurrentStep(4); // Skip to property management page
+      } else {
+        setCurrentStep(prev => prev + 1);
+      }
     }
   };
 
