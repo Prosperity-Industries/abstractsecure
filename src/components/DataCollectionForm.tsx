@@ -29,6 +29,7 @@ interface FormData {
   roleInTransaction: string;
   hasAdditionalParties: string;
   additionalParties: AdditionalParty[];
+  interestedInPropertyManagement: string;
 }
 
 const DataCollectionForm = () => {
@@ -43,11 +44,12 @@ const DataCollectionForm = () => {
     roleInTransaction: '',
     hasAdditionalParties: '',
     additionalParties: [],
+    interestedInPropertyManagement: '',
   });
 
   const totalSteps = formData.hasAdditionalParties === 'yes' 
-    ? 3 + formData.additionalParties.length + 1
-    : 3;
+    ? 4 + formData.additionalParties.length
+    : 4;
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
@@ -84,10 +86,33 @@ const DataCollectionForm = () => {
   };
 
   const handleSelectChange = (value: string, field: keyof FormData) => {
-    setFormData(prev => ({
-      ...prev,
-      [field]: value
-    }));
+    setFormData(prev => {
+      const newData = {
+        ...prev,
+        [field]: value
+      };
+      
+      // If changing hasAdditionalParties to yes, add a new party if needed
+      if (field === 'hasAdditionalParties' && value === 'yes' && prev.additionalParties.length < 4) {
+        if (prev.additionalParties.length === 0 || 
+            (prev.additionalParties.length > 0 && 
+             prev.additionalParties[prev.additionalParties.length - 1].name !== '')) {
+          newData.additionalParties = [
+            ...prev.additionalParties,
+            {
+              name: '',
+              phone: '',
+              email: '',
+              dateOfBirth: '',
+              ssn: '',
+              maritalStatus: ''
+            }
+          ];
+        }
+      }
+      
+      return newData;
+    });
     
     localStorage.setItem('formData', JSON.stringify({
       ...formData,
@@ -100,10 +125,54 @@ const DataCollectionForm = () => {
   };
 
   const handleNext = () => {
-    if (currentStep < totalSteps) {
-      setCurrentStep(prev => prev + 1);
-    } else if (formData.hasAdditionalParties === 'no') {
+    // If we're on an additional party page
+    if (currentStep > 3 && currentStep < totalSteps) {
+      const currentPartyIndex = currentStep - 4;
+      
+      // Validate current party's required fields
+      const currentParty = formData.additionalParties[currentPartyIndex];
+      if (!currentParty?.name) {
+        toast({
+          title: "Required Field",
+          description: "Please enter the additional party's name.",
+          variant: "destructive"
+        });
+        return;
+      }
+
+      // If they want more parties and we haven't reached the max
+      if (formData.hasAdditionalParties === 'yes' && currentPartyIndex < 3) {
+        // Add a new party if we don't already have one for the next step
+        if (!formData.additionalParties[currentPartyIndex + 1]) {
+          setFormData(prev => ({
+            ...prev,
+            additionalParties: [
+              ...prev.additionalParties,
+              {
+                name: '',
+                phone: '',
+                email: '',
+                dateOfBirth: '',
+                ssn: '',
+                maritalStatus: ''
+              }
+            ]
+          }));
+        }
+        setCurrentStep(prev => prev + 1);
+      } 
+      // If they don't want more parties or reached max, go to property management page
+      else {
+        setCurrentStep(totalSteps);
+      }
+    }
+    // If we're on the final step (property management)
+    else if (currentStep === totalSteps) {
       handleSubmit();
+    }
+    // For all other steps
+    else {
+      setCurrentStep(prev => prev + 1);
     }
   };
 
@@ -232,26 +301,28 @@ const DataCollectionForm = () => {
             </Select>
           </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="moreParties">Is there an additional party?</Label>
-            <Select 
-              onValueChange={(value) => {
-                if (value === 'yes') {
-                  addNewAdditionalParty();
-                }
-                handleSelectChange(value, 'hasAdditionalParties');
-              }} 
-              value={formData.hasAdditionalParties}
-            >
-              <SelectTrigger className="w-full">
-                <SelectValue placeholder="Select yes or no" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="yes">Yes</SelectItem>
-                <SelectItem value="no">No</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
+          {partyNumber < 4 && (
+            <div className="space-y-2">
+              <Label htmlFor="moreParties">Is there an additional party?</Label>
+              <Select 
+                onValueChange={(value) => {
+                  if (value === 'yes' && formData.additionalParties.length < 3) {
+                    addNewAdditionalParty();
+                  }
+                  handleSelectChange(value, 'hasAdditionalParties');
+                }} 
+                value={formData.hasAdditionalParties}
+              >
+                <SelectTrigger className="w-full" disabled={formData.additionalParties.length >= 3}>
+                  <SelectValue placeholder="Select yes or no" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="yes">Yes</SelectItem>
+                  <SelectItem value="no">No</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          )}
         </div>
       </FormStep>
     );
@@ -413,8 +484,38 @@ const DataCollectionForm = () => {
             </FormStep>
           )}
 
-          {currentStep > 3 && formData.hasAdditionalParties === 'yes' && 
+          {currentStep > 3 && currentStep < totalSteps && formData.hasAdditionalParties === 'yes' && 
             renderAdditionalPartyForm(currentStep - 4)}
+
+          {currentStep === totalSteps && (
+            <FormStep
+              title="Property Management Services"
+              currentStep={currentStep}
+              totalSteps={totalSteps}
+              onNext={handleSubmit}
+              onPrevious={handlePrevious}
+            >
+              <div className="space-y-6">
+                <div className="space-y-2">
+                  <Label htmlFor="propertyManagement">
+                    Would you be interested in hearing about our property management services?
+                  </Label>
+                  <Select 
+                    onValueChange={(value) => handleSelectChange(value, 'interestedInPropertyManagement')} 
+                    value={formData.interestedInPropertyManagement}
+                  >
+                    <SelectTrigger className="w-full">
+                      <SelectValue placeholder="Select yes or no" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="yes">Yes</SelectItem>
+                      <SelectItem value="no">No</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+            </FormStep>
+          )}
         </div>
       </div>
     </div>
