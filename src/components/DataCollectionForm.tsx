@@ -22,6 +22,8 @@ interface AdditionalParty {
 }
 
 interface FormData {
+  titleOrderNumber: string;
+  titleFileNumber: string;
   fullName: string;
   propertyAddress: string;
   dateOfBirth: string;
@@ -36,7 +38,8 @@ interface FormData {
 
 const DataCollectionForm = () => {
   const { toast } = useToast();
-  const [currentStep, setCurrentStep] = useState(1);
+  const [currentStep, setCurrentStep] = useState(0);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [formData, setFormData] = useState<FormData>(() => {
     // Try to load from localStorage first
     const savedData = localStorage.getItem('formData');
@@ -52,6 +55,8 @@ const DataCollectionForm = () => {
 
     // If no saved or test data, use empty values
     return {
+      titleOrderNumber: '',
+      titleFileNumber: '',
       fullName: '',
       propertyAddress: '',
       dateOfBirth: '',
@@ -66,8 +71,8 @@ const DataCollectionForm = () => {
   });
 
   const totalSteps = formData.hasAdditionalParties === 'yes' 
-    ? 5 + formData.additionalParties.length
-    : 5;
+    ? 9 + formData.additionalParties.length
+    : 9;
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
@@ -139,7 +144,125 @@ const DataCollectionForm = () => {
     }));
   };
 
-  const handleNext = () => {
+  const handleNext = async () => {
+    if (isSubmitting) return;
+
+    // Handle the new initial step
+    if (currentStep === 0) {
+      if (!formData.titleOrderNumber) {
+        toast({
+          title: "Error",
+          description: "Please enter a Title Order Number",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      try {
+        setIsSubmitting(true);
+
+        console.log('Sending data to webhook:', {
+          titleOrderNumber: formData.titleOrderNumber
+        });
+
+        const response = await fetch('https://hook.us2.make.com/kwq1swnwft87fv4fxclyxbq2x5wcu5pt', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Accept': '*/*'
+          },
+          mode: 'cors',
+          body: JSON.stringify({
+            titleOrderNumber: formData.titleOrderNumber.trim()
+          })
+        });
+
+        console.log('Response status:', response.status);
+        const responseText = await response.text();
+        console.log('Raw response text:', responseText);
+
+        // Check if response is "null"
+        if (responseText.trim() === 'null') {
+          throw new Error('File was not found');
+        }
+
+        // Check if response is empty
+        if (!responseText) {
+          throw new Error('Empty response from server');
+        }
+
+        // Try to parse as JSON, but handle text responses too
+        let data;
+        try {
+          // Only try to parse if it looks like JSON
+          if (responseText.trim().startsWith('{') || responseText.trim().startsWith('[')) {
+            data = JSON.parse(responseText);
+            console.log('Parsed JSON response:', data);
+          } else {
+            // If it's not JSON, use it as is
+            data = { Title: responseText.trim() };
+            console.log('Using text response as title:', data);
+          }
+        } catch (e) {
+          console.error('Failed to parse response:', e);
+          console.log('Response that failed to parse:', responseText);
+          throw new Error('Invalid response format from server');
+        }
+
+        // Log the data structure
+        console.log('Response structure:', {
+          hasData: !!data,
+          keys: data ? Object.keys(data) : [],
+          fullData: data
+        });
+
+        // Get the title from the response
+        const title = data?.Title || data?.title || data?.property || data?.address || 
+                     (typeof data === 'string' ? data : null);
+
+        if (!title) {
+          console.error('Missing title in response:', data);
+          throw new Error('Title information not found in response');
+        }
+
+        console.log('Using title:', title);
+
+        // Update form data
+        setFormData(prev => {
+          const newData = {
+            ...prev,
+            propertyAddress: title,
+            titleFileNumber: prev.titleOrderNumber
+          };
+          console.log('New form data:', newData);
+          return newData;
+        });
+
+        toast({
+          title: "Success",
+          description: "Title information retrieved successfully",
+        });
+
+        // Add a small delay before changing steps to ensure state is updated
+        await new Promise(resolve => setTimeout(resolve, 100));
+        
+        console.log('Moving to next step...');
+        setCurrentStep(prev => prev + 1);
+      } catch (error) {
+        console.error('Error details:', error);
+        toast({
+          title: "Error",
+          description: error.message === 'File was not found' 
+            ? "File was not found. Please check the title order number and try again."
+            : error.message || "Failed to retrieve title information. Please try again.",
+          variant: "destructive",
+        });
+      } finally {
+        setIsSubmitting(false);
+      }
+      return;
+    }
+
     // If we're on the final step (insurance quote), handle submission
     if (currentStep === totalSteps) {
       handleSubmit();
@@ -219,6 +342,8 @@ const DataCollectionForm = () => {
       // Prepare the data for submission
       const submissionData = {
         propertyInformation: {
+          titleOrderNumber: formData.titleOrderNumber,
+          titleFileNumber: formData.titleFileNumber,
           fullName: formData.fullName,
           propertyAddress: formData.propertyAddress,
           roleInTransaction: formData.roleInTransaction
@@ -273,6 +398,8 @@ const DataCollectionForm = () => {
 
       // Reset form to initial state
       setFormData({
+        titleOrderNumber: '',
+        titleFileNumber: '',
         fullName: '',
         propertyAddress: '',
         dateOfBirth: '',
@@ -299,7 +426,7 @@ const DataCollectionForm = () => {
   };
 
   const handlePrevious = () => {
-    if (currentStep > 1) {
+    if (currentStep > 0) {
       setCurrentStep(prev => prev - 1);
     }
   };
@@ -455,10 +582,72 @@ const DataCollectionForm = () => {
         </p>
 
         <div className="form-container">
+          {currentStep === 0 && (
+            <FormStep
+              title="Enter Title Order Number"
+              currentStep={1}
+              totalSteps={totalSteps}
+              onNext={handleNext}
+              onPrevious={() => {}}
+              nextButtonText={isSubmitting ? "Loading..." : "Next"}
+            >
+              <div className="space-y-4">
+                <div>
+                  <Label htmlFor="titleOrderNumber">Title Order Number</Label>
+                  <Input
+                    id="titleOrderNumber"
+                    name="titleOrderNumber"
+                    value={formData.titleOrderNumber}
+                    onChange={handleInputChange}
+                    placeholder="Enter your title order number"
+                    disabled={isSubmitting}
+                  />
+                </div>
+              </div>
+            </FormStep>
+          )}
+
           {currentStep === 1 && (
             <FormStep
+              title="Address Verification"
+              currentStep={2}
+              totalSteps={totalSteps}
+              onNext={handleNext}
+              onPrevious={handlePrevious}
+              nextButtonText="Yes"
+            >
+              <div className="space-y-6">
+                <div className="text-center">
+                  <h3 className="text-lg font-semibold mb-2">Is this the address for your transaction?</h3>
+                  <p className="text-lg bg-gray-100 p-4 rounded-md">
+                    {formData.propertyAddress}
+                  </p>
+                </div>
+                
+                <div className="flex justify-center space-x-4 mt-6">
+                  <Button
+                    variant="outline"
+                    onClick={() => {
+                      // Clear the address and go back to title number page
+                      setFormData(prev => ({
+                        ...prev,
+                        propertyAddress: '',
+                        titleOrderNumber: ''
+                      }));
+                      setCurrentStep(0);
+                    }}
+                  >
+                    No, wrong address
+                  </Button>
+                </div>
+              </div>
+            </FormStep>
+          )}
+
+          {currentStep === 2 && (
+            <FormStep
               title="Property Information"
-              currentStep={currentStep}
+              currentStep={currentStep + 1}
               totalSteps={totalSteps}
               onNext={handleNext}
               onPrevious={handlePrevious}
@@ -506,10 +695,10 @@ const DataCollectionForm = () => {
             </FormStep>
           )}
 
-          {currentStep === 2 && (
+          {currentStep === 3 && (
             <FormStep
               title="Personal Information"
-              currentStep={currentStep}
+              currentStep={currentStep + 1}
               totalSteps={totalSteps}
               onNext={handleNext}
               onPrevious={handlePrevious}
@@ -562,10 +751,10 @@ const DataCollectionForm = () => {
             </FormStep>
           )}
 
-          {currentStep === 3 && (
+          {currentStep === 4 && (
             <FormStep
               title="Additional Parties"
-              currentStep={currentStep}
+              currentStep={currentStep + 1}
               totalSteps={totalSteps}
               onNext={handleNext}
               onPrevious={handlePrevious}
@@ -597,122 +786,14 @@ const DataCollectionForm = () => {
             </FormStep>
           )}
 
-          {currentStep > 3 && currentStep < totalSteps - 1 && (
-            <FormStep
-              title={`Additional Party #${currentStep - 3}`}
-              currentStep={currentStep}
-              totalSteps={totalSteps}
-              onNext={handleNext}
-              onPrevious={handlePrevious}
-            >
-              <div className="space-y-6">
-                <div className="space-y-2">
-                  <Label htmlFor="name" className="text-base">
-                    Name
-                  </Label>
-                  <Input
-                    id="name"
-                    value={formData.additionalParties[currentStep - 4]?.name || ''}
-                    onChange={(e) => handleAdditionalPartyChange(currentStep - 4, 'name', e.target.value)}
-                    placeholder="Enter name"
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="phone" className="text-base">
-                    Phone Number
-                  </Label>
-                  <Input
-                    id="phone"
-                    value={formData.additionalParties[currentStep - 4]?.phone || ''}
-                    onChange={(e) => handleAdditionalPartyChange(currentStep - 4, 'phone', e.target.value)}
-                    placeholder="Enter phone number"
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="email" className="text-base">
-                    Email
-                  </Label>
-                  <Input
-                    id="email"
-                    value={formData.additionalParties[currentStep - 4]?.email || ''}
-                    onChange={(e) => handleAdditionalPartyChange(currentStep - 4, 'email', e.target.value)}
-                    placeholder="Enter email"
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="dateOfBirth" className="text-base">
-                    Date of Birth
-                  </Label>
-                  <Input
-                    id="dateOfBirth"
-                    value={formData.additionalParties[currentStep - 4]?.dateOfBirth || ''}
-                    onChange={(e) => handleAdditionalPartyChange(currentStep - 4, 'dateOfBirth', e.target.value)}
-                    placeholder="MM/DD/YYYY"
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="ssn" className="text-base">
-                    Social Security Number
-                  </Label>
-                  <Input
-                    id="ssn"
-                    value={formData.additionalParties[currentStep - 4]?.ssn || ''}
-                    onChange={(e) => handleAdditionalPartyChange(currentStep - 4, 'ssn', e.target.value)}
-                    placeholder="XXX-XX-XXXX"
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="maritalStatus" className="text-base">
-                    Marital Status
-                  </Label>
-                  <Select 
-                    onValueChange={(value) => handleAdditionalPartyChange(currentStep - 4, 'maritalStatus', value)}
-                    value={formData.additionalParties[currentStep - 4]?.maritalStatus || ''}
-                  >
-                    <SelectTrigger className="w-full">
-                      <SelectValue placeholder="Select marital status" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="single">Single</SelectItem>
-                      <SelectItem value="married">Married</SelectItem>
-                      <SelectItem value="divorced">Divorced</SelectItem>
-                      <SelectItem value="widowed">Widowed</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                {currentStep - 4 < 3 && (
-                  <div className="space-y-2">
-                    <Label htmlFor="hasAdditionalParties" className="text-base">
-                      Would you like to add another party?
-                    </Label>
-                    <Select 
-                      onValueChange={(value) => handleSelectChange(value, 'hasAdditionalParties')}
-                      value={formData.hasAdditionalParties}
-                    >
-                      <SelectTrigger className="w-full">
-                        <SelectValue placeholder="Select yes or no" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="yes">Yes</SelectItem>
-                        <SelectItem value="no">No</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                )}
-              </div>
-            </FormStep>
+          {currentStep > 4 && currentStep < totalSteps - 1 && (
+            renderAdditionalPartyForm(currentStep - 5)
           )}
 
           {currentStep === totalSteps - 1 && (
             <FormStep
               title="Property Management Services"
-              currentStep={currentStep}
+              currentStep={currentStep + 1}
               totalSteps={totalSteps}
               onNext={handleNext}
               onPrevious={handlePrevious}
@@ -742,7 +823,7 @@ const DataCollectionForm = () => {
           {currentStep === totalSteps && (
             <FormStep
               title="Insurance Quote"
-              currentStep={currentStep}
+              currentStep={currentStep + 1}
               totalSteps={totalSteps}
               onNext={handleNext}
               onPrevious={handlePrevious}
