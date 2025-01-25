@@ -9,7 +9,9 @@ export interface AdditionalParty {
 
 export interface FormData {
   fullName: string;
+  email: string;
   propertyAddress: string;
+  propertyPlaceId: string;
   dateOfBirth: string;
   ssn: string;
   maritalStatus: string;
