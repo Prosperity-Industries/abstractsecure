@@ -16,12 +16,48 @@ const Insurance = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const [interestedInInsurance, setInterestedInInsurance] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handlePrevious = () => {
     navigate('/property-management');
   };
 
-  const handleSubmit = () => {
+  const submitToWebhook = async () => {
+    if (interestedInInsurance === 'yes') {
+      try {
+        const webhookUrl = 'https://hook.us2.make.com/nhgztmrpk5hjrzy7kbzkqsxvgu7q86kn';
+        
+        // Get all form data from localStorage
+        const formData = localStorage.getItem('formData');
+        const parsedFormData = formData ? JSON.parse(formData) : {};
+        
+        const response = await fetch(webhookUrl, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            ...parsedFormData,
+            interestedInInsurance,
+            submissionTimestamp: new Date().toISOString(),
+            formType: 'insurance_quote'
+          })
+        });
+
+        if (!response.ok) {
+          throw new Error('Failed to submit data to webhook');
+        }
+
+        return true;
+      } catch (error) {
+        console.error('Error submitting to webhook:', error);
+        throw error;
+      }
+    }
+    return true;
+  };
+
+  const handleSubmit = async () => {
     if (!interestedInInsurance) {
       toast({
         title: "Error",
@@ -31,19 +67,33 @@ const Insurance = () => {
       return;
     }
 
-    // Save the choice to localStorage
-    localStorage.setItem('interestedInInsurance', interestedInInsurance);
+    setIsSubmitting(true);
 
-    // Show success message
-    toast({
-      title: "Success!",
-      description: "Your information has been submitted successfully.",
-      variant: "default",
-    });
+    try {
+      // Save the choice to localStorage
+      localStorage.setItem('interestedInInsurance', interestedInInsurance);
 
-    // Navigate to completion or thank you page
-    // For now, we'll navigate to the home page
-    navigate('/');
+      // Submit to webhook if user is interested
+      await submitToWebhook();
+
+      // Show success message
+      toast({
+        title: "Success!",
+        description: "Your information has been submitted successfully.",
+        variant: "default",
+      });
+
+      // Navigate to completion or thank you page
+      navigate('/');
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to submit your information. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -89,8 +139,9 @@ const Insurance = () => {
                 </Button>
                 <Button
                   onClick={handleSubmit}
+                  disabled={isSubmitting}
                 >
-                  Submit
+                  {isSubmitting ? 'Submitting...' : 'Submit'}
                 </Button>
               </div>
             </div>

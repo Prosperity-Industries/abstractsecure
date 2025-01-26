@@ -279,68 +279,8 @@ const DataCollectionForm = () => {
     setCurrentStep(prev => prev + 1);
   };
 
-  const handleSubmit = async () => {
-    try {
-      // Show loading toast
-      toast({
-        title: "Submitting...",
-        description: "Please wait while we process your information.",
-      });
-
-      // Prepare the data for submission
-      const submissionData = {
-        titleFileNumber: formData.titleFileNumber
-      };
-
-      // Send data to webhook
-      const response = await fetch('https://hook.us2.make.com/kwq1swnwft87fv4fxclyxbq2x5wcu5pt', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(submissionData)
-      });
-
-      if (!response.ok) {
-        throw new Error('Submission failed');
-      }
-
-      // Show success message
-      toast({
-        title: "Success!",
-        description: "Your information has been submitted successfully.",
-        variant: "default"
-      });
-
-      // Clear form data from localStorage
-      localStorage.removeItem('formData');
-
-      // Reset form to initial state
-      setFormData({
-        titleOrderNumber: '',
-        titleFileNumber: '',
-        fullName: '',
-        propertyAddress: '',
-        dateOfBirth: '',
-        ssn: '',
-        maritalStatus: '',
-        roleInTransaction: '',
-        interestedInPropertyManagement: '',
-        interestedInInsuranceQuote: '',
-        isRefi: undefined
-      });
-
-      // Return to first step
-      setCurrentStep(0);
-
-    } catch (error) {
-      console.error('Submission error:', error);
-      toast({
-        title: "Error",
-        description: "There was a problem submitting your information. Please try again.",
-        variant: "destructive"
-      });
-    }
+  const handleSubmit = () => {
+    // Validate required fields
   };
 
   const handlePrevious = () => {
