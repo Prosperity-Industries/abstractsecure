@@ -33,8 +33,8 @@ const PropertyManagement = () => {
     // Save the choice to localStorage
     localStorage.setItem('interestedInPropertyManagement', interestedInPropertyManagement);
 
-    // Navigate to the next page
-    navigate('/transaction-information');
+    // Navigate to the insurance page
+    navigate('/insurance');
   };
 
   return (

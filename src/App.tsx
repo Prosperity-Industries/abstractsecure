@@ -12,6 +12,7 @@ import AdditionalPartyTwo from "./pages/AdditionalPartyTwo";
 import AdditionalPartyThree from "./pages/AdditionalPartyThree";
 import AdditionalPartyFour from "./pages/AdditionalPartyFour";
 import PropertyManagement from "./pages/PropertyManagement";
+import Insurance from "./pages/Insurance";
 
 const queryClient = new QueryClient();
 
@@ -31,6 +32,7 @@ const App = () => (
           <Route path="/additional-party-three" element={<AdditionalPartyThree />} />
           <Route path="/additional-party-four" element={<AdditionalPartyFour />} />
           <Route path="/property-management" element={<PropertyManagement />} />
+          <Route path="/insurance" element={<Insurance />} />
         </Routes>
       </BrowserRouter>
     </TooltipProvider>
