@@ -11,6 +11,7 @@ import AdditionalPartyOne from "./pages/AdditionalPartyOne";
 import AdditionalPartyTwo from "./pages/AdditionalPartyTwo";
 import AdditionalPartyThree from "./pages/AdditionalPartyThree";
 import AdditionalPartyFour from "./pages/AdditionalPartyFour";
+import PropertyManagement from "./pages/PropertyManagement";
 
 const queryClient = new QueryClient();
 
@@ -29,6 +30,7 @@ const App = () => (
           <Route path="/additional-party-two" element={<AdditionalPartyTwo />} />
           <Route path="/additional-party-three" element={<AdditionalPartyThree />} />
           <Route path="/additional-party-four" element={<AdditionalPartyFour />} />
+          <Route path="/property-management" element={<PropertyManagement />} />
         </Routes>
       </BrowserRouter>
     </TooltipProvider>
