@@ -14,10 +14,16 @@ import { Label } from "@/components/ui/label";
 const TransactionInformation = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
-  const [role, setRole] = useState('');
+  const [role, setRole] = useState(() => {
+    // Try to load from localStorage
+    return localStorage.getItem('roleInTransaction') || '';
+  });
 
   const handlePrevious = () => {
-    navigate('/');
+    // Clear the role from localStorage when going back
+    localStorage.removeItem('roleInTransaction');
+    // Navigate to the previous form
+    navigate(-1);
   };
 
   const handleNext = () => {
@@ -30,7 +36,7 @@ const TransactionInformation = () => {
       return;
     }
     localStorage.setItem('roleInTransaction', role);
-    navigate('/secure-personal-information');
+    navigate('/personal-information');
   };
 
   return (

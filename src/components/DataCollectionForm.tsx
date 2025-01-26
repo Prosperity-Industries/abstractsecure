@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import FormStep from './FormStep';
@@ -33,17 +33,23 @@ interface FormData {
   maritalStatus: string;
   roleInTransaction: string;
   hasAdditionalParties: string;
-  additionalParties: AdditionalParty[];
   interestedInPropertyManagement: string;
   interestedInInsuranceQuote: string;
   isRefi?: boolean;
+  hasAdditionalTransactionParties?: string;
 }
 
 const DataCollectionForm = () => {
   const { toast } = useToast();
   const navigate = useNavigate();
-  const [currentStep, setCurrentStep] = useState(0);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [role, setRole] = useState(() => localStorage.getItem('roleInTransaction') || '');
+  const [currentStep, setCurrentStep] = useState(() => {
+    // If we have a role in localStorage, we're coming from TransactionInformation
+    // so we should start at the personal information step
+    const savedRole = localStorage.getItem('roleInTransaction');
+    return savedRole ? 2 : 0;
+  });
   const [formData, setFormData] = useState<FormData>(() => {
     // Try to load from localStorage first
     const savedData = localStorage.getItem('formData');
@@ -68,18 +74,41 @@ const DataCollectionForm = () => {
       maritalStatus: '',
       roleInTransaction: '',
       hasAdditionalParties: '',
-      additionalParties: [],
       interestedInPropertyManagement: '',
       interestedInInsuranceQuote: '',
-      isRefi: undefined
+      isRefi: undefined,
+      hasAdditionalTransactionParties: ''
     };
   });
 
   const [addressConfirmation, setAddressConfirmation] = useState<'yes' | 'no' | null>(null);
 
-  const totalSteps = formData.hasAdditionalParties === 'yes' 
-    ? 9 + formData.additionalParties.length
-    : 9;
+  // Update role when it changes in localStorage
+  useEffect(() => {
+    const handleStorageChange = () => {
+      const newRole = localStorage.getItem('roleInTransaction');
+      if (newRole !== role) {
+        setRole(newRole || '');
+      }
+    };
+
+    window.addEventListener('storage', handleStorageChange);
+    return () => window.removeEventListener('storage', handleStorageChange);
+  }, [role]);
+
+  // Check localStorage on mount and when returning to the page
+  useEffect(() => {
+    const newRole = localStorage.getItem('roleInTransaction');
+    if (newRole !== role) {
+      setRole(newRole || '');
+      // If we get a role, move to step 2
+      if (newRole && currentStep < 2) {
+        setCurrentStep(2);
+      }
+    }
+  }, []);
+
+  const totalSteps = 9;
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
@@ -94,53 +123,12 @@ const DataCollectionForm = () => {
     }));
   };
 
-  const handleAdditionalPartyChange = (index: number, field: keyof AdditionalParty, value: string) => {
-    setFormData(prev => {
-      const updatedParties = [...prev.additionalParties];
-      updatedParties[index] = {
-        ...updatedParties[index] || {
-          name: '',
-          phone: '',
-          email: '',
-          dateOfBirth: '',
-          ssn: '',
-          maritalStatus: ''
-        },
-        [field]: value
-      };
-      return {
-        ...prev,
-        additionalParties: updatedParties
-      };
-    });
-  };
-
   const handleSelectChange = (value: string, field: keyof FormData) => {
     setFormData(prev => {
       const newData = {
         ...prev,
         [field]: value
       };
-      
-      // If changing hasAdditionalParties
-      if (field === 'hasAdditionalParties') {
-        if (value === 'yes' && prev.additionalParties.length === 0) {
-          // Add first additional party if selecting 'yes'
-          newData.additionalParties = [
-            {
-              name: '',
-              phone: '',
-              email: '',
-              dateOfBirth: '',
-              ssn: '',
-              maritalStatus: ''
-            }
-          ];
-        } else if (value === 'no') {
-          // Clear additional parties if selecting 'no'
-          newData.additionalParties = [];
-        }
-      }
       
       return newData;
     });
@@ -184,26 +172,16 @@ const DataCollectionForm = () => {
 
         const data = await response.json();
         
-        // Log the response data to help with debugging
-        console.log('Address API Response:', data);
-
-        // Check if we received valid data
-        if (!data) {
-          throw new Error('No data received from address lookup');
-        }
-
-        // Extract the Title from the response
-        if (data.Title) {
+        if (data) {
           setFormData(prev => ({
             ...prev,
-            propertyAddress: data.Title,
-            isRefi: false // Set default value since refi info is not provided
+            propertyAddress: data.Title || '',
+            isRefi: false
           }));
           setCurrentStep(1);
-          return;
+        } else {
+          throw new Error('No data received from address lookup');
         }
-
-        throw new Error('No Title field found in response data');
       } catch (error) {
         console.error('Error:', error);
         toast({
@@ -214,6 +192,7 @@ const DataCollectionForm = () => {
       } finally {
         setIsSubmitting(false);
       }
+      return;
     } 
     // Handle address confirmation step
     else if (currentStep === 1) {
@@ -238,11 +217,35 @@ const DataCollectionForm = () => {
         }));
         setAddressConfirmation(null);
       }
+      return;
     }
+    // Handle personal information step
+    else if (currentStep === 2) {
+      if (!formData.fullName || !formData.dateOfBirth || !formData.ssn || !formData.maritalStatus) {
+        toast({
+          title: "Error",
+          description: "Please fill in all required fields",
+          variant: "destructive",
+        });
+        return;
+      }
+      
+      // Save the form data to localStorage
+      const personalInfo = {
+        fullName: formData.fullName,
+        dateOfBirth: formData.dateOfBirth,
+        ssn: formData.ssn,
+        maritalStatus: formData.maritalStatus
+      };
+      localStorage.setItem('personalInfo', JSON.stringify(personalInfo));
+      
+      // Navigate to additional parties page
+      navigate('/additional-parties');
+      return;
+    }
+    
     // For other steps, just proceed
-    else {
-      setCurrentStep(prev => prev + 1);
-    }
+    setCurrentStep(prev => prev + 1);
   };
 
   const handleSubmit = async () => {
@@ -292,10 +295,10 @@ const DataCollectionForm = () => {
         maritalStatus: '',
         roleInTransaction: '',
         hasAdditionalParties: '',
-        additionalParties: [],
         interestedInPropertyManagement: '',
         interestedInInsuranceQuote: '',
-        isRefi: undefined
+        isRefi: undefined,
+        hasAdditionalTransactionParties: ''
       });
 
       // Return to first step
@@ -410,28 +413,58 @@ const DataCollectionForm = () => {
                 />
               </div>
               <div>
-                <Label htmlFor="roleInTransaction">Role in Transaction</Label>
+                <Label htmlFor="dateOfBirth">Date of Birth</Label>
+                <Input
+                  id="dateOfBirth"
+                  name="dateOfBirth"
+                  type="date"
+                  value={formData.dateOfBirth}
+                  onChange={handleInputChange}
+                  required
+                />
+              </div>
+              <div>
+                <Label htmlFor="ssn">Social Security Number</Label>
+                <Input
+                  id="ssn"
+                  name="ssn"
+                  value={formData.ssn}
+                  onChange={handleInputChange}
+                  placeholder="Enter your SSN"
+                  required
+                />
+              </div>
+              <div>
+                <Label htmlFor="maritalStatus">Marital Status</Label>
                 <Select
-                  value={formData.roleInTransaction}
-                  onValueChange={(value) => {
-                    setFormData(prev => ({
-                      ...prev,
-                      roleInTransaction: value
-                    }));
-                    localStorage.setItem('formData', JSON.stringify({
-                      ...formData,
-                      roleInTransaction: value
-                    }));
-                  }}
+                  value={formData.maritalStatus}
+                  onValueChange={(value) => handleSelectChange(value, 'maritalStatus')}
                 >
                   <SelectTrigger>
-                    <SelectValue placeholder="Select your role" />
+                    <SelectValue placeholder="Select marital status" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="buyer">Buyer</SelectItem>
-                    <SelectItem value="seller">Seller</SelectItem>
-                    <SelectItem value="agent">Agent</SelectItem>
-                    <SelectItem value="other">Other</SelectItem>
+                    <SelectItem value="single">Single</SelectItem>
+                    <SelectItem value="married">Married</SelectItem>
+                    <SelectItem value="divorced">Divorced</SelectItem>
+                    <SelectItem value="widowed">Widowed</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div>
+                <Label htmlFor="hasAdditionalTransactionParties">
+                  {`Are there additional ${role === 'buyer' ? 'Buyers' : 'Sellers'}?`}
+                </Label>
+                <Select
+                  value={formData.hasAdditionalTransactionParties}
+                  onValueChange={(value) => handleSelectChange(value, 'hasAdditionalTransactionParties')}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select yes or no" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="yes">Yes</SelectItem>
+                    <SelectItem value="no">No</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
