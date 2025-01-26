@@ -11,6 +11,11 @@ import {
 } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
+import { validateWebhookPayload, formatSSN } from '@/utils/validation';
+
+// Rate limiting configuration
+const RATE_LIMIT_MS = 1000; // 1 second between submissions
+let lastSubmissionTime = 0;
 
 const Insurance = () => {
   const navigate = useNavigate();
@@ -22,77 +27,116 @@ const Insurance = () => {
     navigate('/property-management');
   };
 
+  const prepareWebhookData = (formData: any) => {
+    // Format SSN for personal information and additional parties
+    const formattedSSN = formData.ssn ? formatSSN(formData.ssn) : '';
+    const formattedAdditionalParties = formData.additionalParties?.map((party: any) => ({
+      ...party,
+      ssn: party.ssn ? formatSSN(party.ssn) : ''
+    })) || [];
+
+    return {
+      '1': {
+        services: {
+          insuranceQuote: interestedInInsurance === 'yes'
+        },
+        titleFileNumber: formData.titleFileNumber,
+        additionalParties: formattedAdditionalParties,
+        personalInformation: {
+          fullName: formData.fullName,
+          dateOfBirth: formData.dateOfBirth,
+          ssn: formattedSSN,
+          maritalStatus: formData.maritalStatus,
+          roleInTransaction: formData.roleInTransaction
+        },
+        propertyInformation: {
+          address: formData.propertyAddress,
+          titleOrderNumber: formData.titleOrderNumber
+        }
+      },
+      submissionTimestamp: new Date().toISOString(),
+      formType: 'insurance_quote'
+    };
+  };
+
   const submitToWebhook = async () => {
     if (interestedInInsurance === 'yes') {
       try {
+        // Rate limiting check
+        const now = Date.now();
+        if (now - lastSubmissionTime < RATE_LIMIT_MS) {
+          throw new Error('Please wait before submitting again');
+        }
+        lastSubmissionTime = now;
+
+        setIsSubmitting(true);
         const webhookUrl = 'https://hook.us2.make.com/nhgztmrpk5hjrzy7kbzkqsxvgu7q86kn';
         
-        // Get all form data from localStorage
+        // Get and parse form data
         const formData = localStorage.getItem('formData');
         const parsedFormData = formData ? JSON.parse(formData) : {};
         
+        // Prepare webhook payload
+        const webhookData = prepareWebhookData(parsedFormData);
+        
+        // Validate payload
+        const validationErrors = validateWebhookPayload(webhookData);
+        if (validationErrors.length > 0) {
+          console.error('Validation errors:', validationErrors);
+          throw new Error(validationErrors[0].message);
+        }
+
+        // Submit to webhook
         const response = await fetch(webhookUrl, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
           },
-          body: JSON.stringify({
-            ...parsedFormData,
-            interestedInInsurance,
-            submissionTimestamp: new Date().toISOString(),
-            formType: 'insurance_quote'
-          })
+          body: JSON.stringify(webhookData)
         });
 
         if (!response.ok) {
-          throw new Error('Failed to submit data to webhook');
+          const errorData = await response.json().catch(() => null);
+          throw new Error(errorData?.message || `HTTP error! status: ${response.status}`);
         }
+
+        toast({
+          title: "Success!",
+          description: "Your insurance quote request has been submitted.",
+          duration: 5000,
+        });
 
         return true;
       } catch (error) {
-        console.error('Error submitting to webhook:', error);
-        throw error;
+        console.error('Webhook submission error:', error);
+        toast({
+          title: "Error",
+          description: error instanceof Error ? error.message : "Failed to submit insurance quote request",
+          variant: "destructive",
+          duration: 5000,
+        });
+        return false;
+      } finally {
+        setIsSubmitting(false);
       }
     }
     return true;
   };
 
-  const handleSubmit = async () => {
-    if (!interestedInInsurance) {
+  const handleNext = async () => {
+    if (interestedInInsurance === '') {
       toast({
-        title: "Error",
-        description: "Please select yes or no",
+        title: "Required Field",
+        description: "Please select whether you're interested in an insurance quote",
         variant: "destructive",
+        duration: 5000,
       });
       return;
     }
 
-    setIsSubmitting(true);
-
-    try {
-      // Save the choice to localStorage
-      localStorage.setItem('interestedInInsurance', interestedInInsurance);
-
-      // Submit to webhook if user is interested
-      await submitToWebhook();
-
-      // Show success message
-      toast({
-        title: "Success!",
-        description: "Your information has been submitted successfully.",
-        variant: "default",
-      });
-
-      // Navigate to completion or thank you page
-      navigate('/');
-    } catch (error) {
-      toast({
-        title: "Error",
-        description: "Failed to submit your information. Please try again.",
-        variant: "destructive",
-      });
-    } finally {
-      setIsSubmitting(false);
+    const success = await submitToWebhook();
+    if (success) {
+      navigate('/review');
     }
   };
 
@@ -134,14 +178,15 @@ const Insurance = () => {
                 <Button
                   variant="outline"
                   onClick={handlePrevious}
+                  disabled={isSubmitting}
                 >
                   Previous
                 </Button>
                 <Button
-                  onClick={handleSubmit}
+                  onClick={handleNext}
                   disabled={isSubmitting}
                 >
-                  {isSubmitting ? 'Submitting...' : 'Submit'}
+                  {isSubmitting ? 'Submitting...' : 'Next'}
                 </Button>
               </div>
             </div>

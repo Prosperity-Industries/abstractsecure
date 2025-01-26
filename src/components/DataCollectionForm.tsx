@@ -13,6 +13,7 @@ import {
 } from "@/components/ui/select";
 import { loadTestData } from '@/utils/tempTestData';
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { formatSSN } from '@/utils/validation';
 
 interface AdditionalParty {
   name: string;
@@ -34,6 +35,7 @@ interface FormData {
   roleInTransaction: string;
   interestedInPropertyManagement: string;
   interestedInInsuranceQuote: string;
+  hasAdditionalParties: string;
   isRefi?: boolean;
 }
 
@@ -41,27 +43,18 @@ const DataCollectionForm = () => {
   const { toast } = useToast();
   const navigate = useNavigate();
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [role, setRole] = useState(() => localStorage.getItem('roleInTransaction') || '');
-  const [currentStep, setCurrentStep] = useState(() => {
-    // If we have a role in localStorage, we're coming from TransactionInformation
-    // so we should start at the personal information step
-    const savedRole = localStorage.getItem('roleInTransaction');
-    return savedRole ? 2 : 0;
-  });
+  const [role, setRole] = useState('');
+  // Always start at step 0 (title order number)
+  const [currentStep, setCurrentStep] = useState(0);
+
+  // Clear any existing stored data on component mount
+  useEffect(() => {
+    localStorage.removeItem('formData');
+    localStorage.removeItem('roleInTransaction');
+  }, []);
+
   const [formData, setFormData] = useState<FormData>(() => {
-    // Try to load from localStorage first
-    const savedData = localStorage.getItem('formData');
-    if (savedData) {
-      return JSON.parse(savedData);
-    }
-
-    // If no saved data, check for test data in development
-    const testData = loadTestData();
-    if (testData) {
-      return testData;
-    }
-
-    // If no saved or test data, use empty values
+    // Start with empty values
     return {
       titleOrderNumber: '',
       titleFileNumber: '',
@@ -73,6 +66,7 @@ const DataCollectionForm = () => {
       roleInTransaction: '',
       interestedInPropertyManagement: '',
       interestedInInsuranceQuote: '',
+      hasAdditionalParties: '',
       isRefi: undefined
     };
   });
@@ -127,31 +121,29 @@ const DataCollectionForm = () => {
     return () => window.removeEventListener('storage', handleStorageChange);
   }, [role]);
 
-  // Check localStorage on mount and when returning to the page
-  useEffect(() => {
-    const newRole = localStorage.getItem('roleInTransaction');
-    if (newRole !== role) {
-      setRole(newRole || '');
-      // If we get a role, move to step 2
-      if (newRole && currentStep < 2) {
-        setCurrentStep(2);
-      }
-    }
-  }, []);
-
   const totalSteps = 9;
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
-    setFormData(prev => ({
-      ...prev,
-      [name]: value
-    }));
     
-    localStorage.setItem('formData', JSON.stringify({
-      ...formData,
-      [name]: value
-    }));
+    try {
+      // Format SSN if this is an SSN field
+      if (name === 'ssn') {
+        // Only attempt to format if we have enough digits
+        const numbers = value.replace(/\D/g, '');
+        if (numbers.length === 9) {
+          const formattedSSN = formatSSN(value);
+          setFormData(prev => ({ ...prev, [name]: formattedSSN }));
+          return;
+        }
+      }
+      
+      // For all other fields or incomplete SSN
+      setFormData(prev => ({ ...prev, [name]: value }));
+    } catch (error) {
+      // If SSN formatting fails, just set the raw value
+      setFormData(prev => ({ ...prev, [name]: value }));
+    }
   };
 
   const handleSelectChange = (field: keyof FormData, value: string) => {
@@ -186,6 +178,12 @@ const DataCollectionForm = () => {
 
       try {
         setIsSubmitting(true);
+        
+        // Save to localStorage before proceeding
+        localStorage.setItem('formData', JSON.stringify({
+          ...formData,
+          titleFileNumber: formData.titleFileNumber
+        }));
 
         const response = await fetch('https://hook.us2.make.com/kwq1swnwft87fv4fxclyxbq2x5wcu5pt', {
           method: 'POST',
@@ -194,85 +192,79 @@ const DataCollectionForm = () => {
           },
           body: JSON.stringify({
             title_file: formData.titleFileNumber.trim()
-          })
+          }),
         });
 
         if (!response.ok) {
-          throw new Error(`Failed to fetch address information: ${response.status} ${response.statusText}`);
+          throw new Error('Failed to fetch data');
         }
 
         const data = await response.json();
+        console.log('Webhook response:', data); // Add logging to see response structure
         
-        if (data) {
-          setFormData(prev => ({
-            ...prev,
-            propertyAddress: data.Title || '',
-            isRefi: false
-          }));
-          setCurrentStep(1);
-        } else {
-          throw new Error('No data received from address lookup');
-        }
+        // Update form data with the received property address
+        // Using property_address to match snake_case convention
+        const updatedFormData = {
+          ...formData,
+          propertyAddress: data.property_address || data.Title || '',
+        };
+        
+        setFormData(updatedFormData);
+        // Save the updated form data including property address
+        localStorage.setItem('formData', JSON.stringify(updatedFormData));
+        
+        setCurrentStep(prev => prev + 1);
       } catch (error) {
-        console.error('Error:', error);
         toast({
           title: "Error",
-          description: error.message,
+          description: "Failed to fetch property information. Please try again.",
           variant: "destructive",
         });
       } finally {
         setIsSubmitting(false);
       }
       return;
-    } 
-    // Handle address confirmation step
-    else if (currentStep === 1) {
+    }
+
+    // Validate property address before proceeding from address confirmation
+    if (currentStep === 1) {
+      if (!formData.propertyAddress) {
+        toast({
+          title: "Error",
+          description: "Property address is missing. Please go back and try again.",
+          variant: "destructive",
+        });
+        return;
+      }
       if (!addressConfirmation) {
         toast({
           title: "Error",
-          description: "Please select yes or no",
+          description: "Please confirm if the address is correct",
           variant: "destructive",
         });
         return;
       }
-      
-      if (addressConfirmation === 'yes') {
-        navigate('/transaction-information');
-      } else if (addressConfirmation === 'no') {
-        setCurrentStep(0);
-        setFormData(prev => ({
-          ...prev,
-          propertyAddress: '',
-          titleOrderNumber: '',
-          titleFileNumber: ''
-        }));
-        setAddressConfirmation(null);
-      }
-      return;
-    }
-    // Handle personal information step
-    else if (currentStep === 2) {
-      if (!formData.fullName || !formData.dateOfBirth || !formData.ssn || !formData.maritalStatus) {
+      if (addressConfirmation === 'no') {
         toast({
           title: "Error",
-          description: "Please fill in all required fields",
+          description: "Please contact support to correct the property address",
           variant: "destructive",
         });
         return;
       }
-      
-      // Save the form data to localStorage
-      const personalInfo = {
-        fullName: formData.fullName,
-        dateOfBirth: formData.dateOfBirth,
-        ssn: formData.ssn,
-        maritalStatus: formData.maritalStatus
-      };
-      localStorage.setItem('personalInfo', JSON.stringify(personalInfo));
-      
-      // Navigate to additional parties page
-      navigate('/additional-parties');
-      return;
+    }
+
+    // For final submission
+    if (currentStep === totalSteps - 1) {
+      if (!formData.propertyAddress) {
+        toast({
+          title: "Error",
+          description: "Property address is required. Please go back and confirm the address.",
+          variant: "destructive",
+        });
+        return;
+      }
+      // Add other final validation here
     }
     
     // For other steps, just proceed
@@ -289,6 +281,202 @@ const DataCollectionForm = () => {
     }
   };
 
+  const resetForm = () => {
+    // Clear form data
+    const emptyForm = {
+      titleOrderNumber: '',
+      titleFileNumber: '',
+      fullName: '',
+      propertyAddress: '',
+      dateOfBirth: '',
+      ssn: '',
+      maritalStatus: '',
+      roleInTransaction: '',
+      interestedInPropertyManagement: '',
+      interestedInInsuranceQuote: '',
+      hasAdditionalParties: '',
+      isRefi: undefined
+    };
+    
+    setFormData(emptyForm);
+    setCurrentStep(0);
+    setAddressConfirmation(null);
+    setRole('');
+    
+    // Clear localStorage
+    localStorage.removeItem('formData');
+    localStorage.removeItem('roleInTransaction');
+  };
+
+  const handleNextUpdated = async () => {
+    if (isSubmitting) return;
+
+    // Handle the title order number step
+    if (currentStep === 0) {
+      if (!formData.titleFileNumber) {
+        toast({
+          title: "Error",
+          description: "Please enter a Title File Number",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      try {
+        setIsSubmitting(true);
+        
+        // Save to localStorage before proceeding
+        localStorage.setItem('formData', JSON.stringify({
+          ...formData,
+          titleFileNumber: formData.titleFileNumber
+        }));
+
+        const response = await fetch('https://hook.us2.make.com/kwq1swnwft87fv4fxclyxbq2x5wcu5pt', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            title_file: formData.titleFileNumber.trim()
+          }),
+        });
+
+        if (!response.ok) {
+          throw new Error('Failed to fetch data');
+        }
+
+        const data = await response.json();
+        console.log('Webhook response:', data); // Add logging to see response structure
+        
+        // Update form data with the received property address
+        // Using property_address to match snake_case convention
+        const updatedFormData = {
+          ...formData,
+          propertyAddress: data.property_address || data.Title || '',
+        };
+        
+        setFormData(updatedFormData);
+        // Save the updated form data including property address
+        localStorage.setItem('formData', JSON.stringify(updatedFormData));
+        
+        setCurrentStep(prev => prev + 1);
+      } catch (error) {
+        toast({
+          title: "Error",
+          description: "Failed to fetch property information. Please try again.",
+          variant: "destructive",
+        });
+      } finally {
+        setIsSubmitting(false);
+      }
+      return;
+    }
+
+    // Validate property address before proceeding from address confirmation
+    if (currentStep === 1) {
+      if (!formData.propertyAddress) {
+        toast({
+          title: "Error",
+          description: "Property address is missing. Please go back and try again.",
+          variant: "destructive",
+        });
+        return;
+      }
+      if (!addressConfirmation) {
+        toast({
+          title: "Error",
+          description: "Please confirm if the address is correct",
+          variant: "destructive",
+        });
+        return;
+      }
+      if (addressConfirmation === 'no') {
+        toast({
+          title: "Error",
+          description: "Please contact support to correct the property address",
+          variant: "destructive",
+        });
+        return;
+      }
+    }
+
+    // For final submission (insurance quote step)
+    if (currentStep === 5) {
+      if (!formData.interestedInInsuranceQuote) {
+        toast({
+          title: "Error",
+          description: "Please select whether you would like an insurance quote",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      try {
+        setIsSubmitting(true);
+        console.log('Submitting final form data:', formData); // Debug log
+
+        // Make final submission API call to webhook2
+        const response = await fetch('https://hook.us2.make.com/xohysh3bqv211obzpo3uo3kb4bkjgtws', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            title_file: formData.titleFileNumber,
+            property_address: formData.propertyAddress,
+            full_name: formData.fullName,
+            date_of_birth: formData.dateOfBirth,
+            ssn: formData.ssn,
+            marital_status: formData.maritalStatus,
+            role_in_transaction: formData.roleInTransaction,
+            has_additional_parties: formData.hasAdditionalParties,
+            interested_in_property_management: formData.interestedInPropertyManagement,
+            interested_in_insurance_quote: formData.interestedInInsuranceQuote,
+            address_confirmation: addressConfirmation
+          }),
+        });
+
+        if (!response.ok) {
+          throw new Error('Failed to submit form');
+        }
+
+        const responseData = await response.json();
+        console.log('Webhook2 response:', responseData); // Debug log
+
+        if (responseData.status === 'success') {
+          // Show success message from webhook
+          toast({
+            title: "Success",
+            description: responseData.message || "Your information has been submitted successfully!",
+            duration: 5000, // Show for 5 seconds to ensure user sees it
+          });
+
+          // Wait for 2 seconds to ensure user sees the success message
+          await new Promise(resolve => setTimeout(resolve, 2000));
+
+          // Reset the form and return to beginning
+          resetForm();
+        } else {
+          throw new Error('Submission was not successful');
+        }
+        
+      } catch (error) {
+        console.error('Submission error:', error); // Debug log
+        toast({
+          title: "Error",
+          description: "Failed to submit form. Please try again.",
+          variant: "destructive",
+        });
+      } finally {
+        setIsSubmitting(false);
+      }
+      return;
+    }
+    
+    // For other steps, just proceed
+    setCurrentStep(prev => prev + 1);
+  };
+
   return (
     <div className="min-h-screen flex flex-col items-center justify-start p-4 bg-gradient-to-b from-blue-50 to-white">
       <div className="w-full max-w-2xl">
@@ -303,7 +491,7 @@ const DataCollectionForm = () => {
             title="Enter Title Order Number"
             currentStep={1}
             totalSteps={totalSteps}
-            onNext={handleNext}
+            onNext={handleNextUpdated}
             onPrevious={() => {}}
             nextButtonText={isSubmitting ? "Loading..." : "Next"}
           >
@@ -328,7 +516,7 @@ const DataCollectionForm = () => {
             title="Address Verification"
             currentStep={2}
             totalSteps={totalSteps}
-            onNext={handleNext}
+            onNext={handleNextUpdated}
             onPrevious={handlePrevious}
             nextButtonText="Next"
           >
@@ -365,7 +553,7 @@ const DataCollectionForm = () => {
             title="Personal Information"
             currentStep={3}
             totalSteps={totalSteps}
-            onNext={handleNext}
+            onNext={handleNextUpdated}
             onPrevious={handlePrevious}
             nextButtonText="Next"
           >
@@ -395,10 +583,10 @@ const DataCollectionForm = () => {
                 <Input
                   id="ssn"
                   name="ssn"
-                  type="password"
+                  type="text"
                   value={formData.ssn}
                   onChange={handleInputChange}
-                  placeholder="Enter your SSN"
+                  placeholder="Enter your SSN (XXX-XX-XXXX)"
                 />
               </div>
               <div>
@@ -417,6 +605,96 @@ const DataCollectionForm = () => {
                     <SelectItem value="widowed">Widowed</SelectItem>
                   </SelectContent>
                 </Select>
+              </div>
+            </div>
+          </FormStep>
+        )}
+        
+        {currentStep === 3 && (
+          <FormStep
+            title="Additional Parties"
+            currentStep={4}
+            totalSteps={totalSteps}
+            onNext={handleNextUpdated}
+            onPrevious={handlePrevious}
+            nextButtonText="Next"
+          >
+            <div className="space-y-6">
+              <div className="space-y-4">
+                <h3 className="text-lg font-semibold">Are there any additional parties involved in this transaction? <span className="text-red-500">*</span></h3>
+                <RadioGroup 
+                  value={formData.hasAdditionalParties || ''} 
+                  onValueChange={(value) => handleSelectChange('hasAdditionalParties', value)}
+                >
+                  <div className="flex items-center space-x-2">
+                    <RadioGroupItem value="yes" id="hasAdditionalYes" />
+                    <Label htmlFor="hasAdditionalYes">Yes</Label>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <RadioGroupItem value="no" id="hasAdditionalNo" />
+                    <Label htmlFor="hasAdditionalNo">No</Label>
+                  </div>
+                </RadioGroup>
+              </div>
+            </div>
+          </FormStep>
+        )}
+
+        {currentStep === 4 && (
+          <FormStep
+            title="Property Management"
+            currentStep={5}
+            totalSteps={totalSteps}
+            onNext={handleNextUpdated}
+            onPrevious={handlePrevious}
+            nextButtonText="Next"
+          >
+            <div className="space-y-6">
+              <div className="space-y-4">
+                <h3 className="text-lg font-semibold">Would you like information about our property management services? <span className="text-red-500">*</span></h3>
+                <RadioGroup 
+                  value={formData.interestedInPropertyManagement || ''} 
+                  onValueChange={(value) => handleSelectChange('interestedInPropertyManagement', value)}
+                >
+                  <div className="flex items-center space-x-2">
+                    <RadioGroupItem value="yes" id="propertyManagementYes" />
+                    <Label htmlFor="propertyManagementYes">Yes</Label>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <RadioGroupItem value="no" id="propertyManagementNo" />
+                    <Label htmlFor="propertyManagementNo">No</Label>
+                  </div>
+                </RadioGroup>
+              </div>
+            </div>
+          </FormStep>
+        )}
+
+        {currentStep === 5 && (
+          <FormStep
+            title="Insurance Quote"
+            currentStep={6}
+            totalSteps={totalSteps}
+            onNext={handleNextUpdated}
+            onPrevious={handlePrevious}
+            nextButtonText="Submit"
+          >
+            <div className="space-y-6">
+              <div className="space-y-4">
+                <h3 className="text-lg font-semibold">Would you like a quote for homeowner's insurance? <span className="text-red-500">*</span></h3>
+                <RadioGroup 
+                  value={formData.interestedInInsuranceQuote || ''} 
+                  onValueChange={(value) => handleSelectChange('interestedInInsuranceQuote', value)}
+                >
+                  <div className="flex items-center space-x-2">
+                    <RadioGroupItem value="yes" id="insuranceYes" />
+                    <Label htmlFor="insuranceYes">Yes</Label>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <RadioGroupItem value="no" id="insuranceNo" />
+                    <Label htmlFor="insuranceNo">No</Label>
+                  </div>
+                </RadioGroup>
               </div>
             </div>
           </FormStep>

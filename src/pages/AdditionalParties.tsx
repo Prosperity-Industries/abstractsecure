@@ -60,13 +60,8 @@ const AdditionalParties = () => {
   }, [navigate, toast]);
 
   const handlePrevious = () => {
-    // Use browser history if possible
-    if (window.history.state && window.history.length > 1) {
-      navigate(-1);
-    } else {
-      // Fallback to direct navigation to transaction information
-      navigate('/transaction-information');
-    }
+    // Always navigate back to personal information
+    navigate('/personal-information');
   };
 
   const handleNext = () => {
