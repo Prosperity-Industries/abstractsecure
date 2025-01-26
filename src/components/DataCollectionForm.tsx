@@ -12,6 +12,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { loadTestData } from '@/utils/tempTestData';
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 
 interface AdditionalParty {
   name: string;
@@ -73,6 +74,8 @@ const DataCollectionForm = () => {
       isRefi: undefined
     };
   });
+
+  const [addressConfirmation, setAddressConfirmation] = useState<'yes' | 'no' | null>(null);
 
   const totalSteps = formData.hasAdditionalParties === 'yes' 
     ? 9 + formData.additionalParties.length
@@ -175,51 +178,69 @@ const DataCollectionForm = () => {
           })
         });
 
+        if (!response.ok) {
+          throw new Error(`Failed to fetch address information: ${response.status} ${response.statusText}`);
+        }
+
         const data = await response.json();
         
-        if (!response.ok) {
-          throw new Error('Failed to fetch address information');
+        // Log the response data to help with debugging
+        console.log('Address API Response:', data);
+
+        // Check if we received valid data
+        if (!data) {
+          throw new Error('No data received from address lookup');
         }
 
-        // Check if we received valid address data
-        if (data && 
-            data.street_number && 
-            data.street_name && 
-            data.city && 
-            data.state && 
-            data.zip) {
-          
-          // Format the address
-          const address = `${data.street_number} ${data.street_name}, ${data.city}, ${data.state} ${data.zip}`;
+        // Extract the Title from the response
+        if (data.Title) {
           setFormData(prev => ({
             ...prev,
-            propertyAddress: address,
-            isRefi: data.refi === true // Set refi flag if it exists
+            propertyAddress: data.Title,
+            isRefi: false // Set default value since refi info is not provided
           }));
-        } else {
-          // If we don't get valid address data, set an error message
-          setFormData(prev => ({
-            ...prev,
-            propertyAddress: "Title File Not Found"
-          }));
+          setCurrentStep(1);
+          return;
         }
 
-        setIsSubmitting(false);
-        setCurrentStep(prev => prev + 1);
+        throw new Error('No Title field found in response data');
       } catch (error) {
-        setIsSubmitting(false);
         console.error('Error:', error);
-        
-        // Set error message in the address field
+        toast({
+          title: "Error",
+          description: error.message,
+          variant: "destructive",
+        });
+      } finally {
+        setIsSubmitting(false);
+      }
+    } 
+    // Handle address confirmation step
+    else if (currentStep === 1) {
+      if (!addressConfirmation) {
+        toast({
+          title: "Error",
+          description: "Please select yes or no",
+          variant: "destructive",
+        });
+        return;
+      }
+      
+      if (addressConfirmation === 'yes') {
+        navigate('/transaction-information');
+      } else if (addressConfirmation === 'no') {
+        setCurrentStep(0);
         setFormData(prev => ({
           ...prev,
-          propertyAddress: "Title File Not Found"
+          propertyAddress: '',
+          titleOrderNumber: '',
+          titleFileNumber: ''
         }));
-        
-        setCurrentStep(prev => prev + 1);
+        setAddressConfirmation(null);
       }
-    } else {
-      // For all other steps, just advance to the next step
+    }
+    // For other steps, just proceed
+    else {
       setCurrentStep(prev => prev + 1);
     }
   };
@@ -296,11 +317,6 @@ const DataCollectionForm = () => {
     }
   };
 
-  const handleAddressConfirm = () => {
-    // Navigate to the Transaction Information webform
-    navigate('/transaction-information');
-  };
-
   return (
     <div className="min-h-screen flex flex-col items-center justify-start p-4 bg-gradient-to-b from-blue-50 to-white">
       <div className="w-full max-w-2xl">
@@ -321,13 +337,13 @@ const DataCollectionForm = () => {
           >
             <div className="space-y-4">
               <div>
-                <Label htmlFor="titleOrderNumber">Title Order Number</Label>
+                <Label htmlFor="titleFileNumber">Title File Number</Label>
                 <Input
-                  id="titleOrderNumber"
-                  name="titleOrderNumber"
-                  value={formData.titleOrderNumber}
+                  id="titleFileNumber"
+                  name="titleFileNumber"
+                  value={formData.titleFileNumber}
                   onChange={handleInputChange}
-                  placeholder="Enter your title order number"
+                  placeholder="Enter your title file number"
                   disabled={isSubmitting}
                 />
               </div>
@@ -340,33 +356,33 @@ const DataCollectionForm = () => {
             title="Address Verification"
             currentStep={2}
             totalSteps={totalSteps}
-            onNext={handleAddressConfirm}
+            onNext={handleNext}
             onPrevious={handlePrevious}
-            nextButtonText="Confirm Address"
+            nextButtonText="Next"
           >
             <div className="space-y-6">
               <div className="text-center">
-                <h3 className="text-lg font-semibold mb-2">Is this the correct address for your transaction?</h3>
+                <h3 className="text-lg font-semibold mb-2">Property Address:</h3>
                 <p className="text-lg bg-gray-100 p-4 rounded-md">
                   {formData.propertyAddress}
                 </p>
               </div>
               
-              <div className="flex justify-center space-x-4 mt-6">
-                <button
-                  type="button"
-                  className="px-4 py-2 text-sm font-medium text-red-600 bg-white border border-red-300 rounded-md hover:bg-red-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
-                  onClick={() => {
-                    setFormData(prev => ({
-                      ...prev,
-                      propertyAddress: '',
-                      titleOrderNumber: ''
-                    }));
-                    setCurrentStep(0);
-                  }}
+              <div className="space-y-4">
+                <h3 className="text-lg font-semibold">Is this the correct address for your transaction? <span className="text-red-500">*</span></h3>
+                <RadioGroup 
+                  value={addressConfirmation || ''} 
+                  onValueChange={(value) => setAddressConfirmation(value as 'yes' | 'no')}
                 >
-                  No, Wrong Address
-                </button>
+                  <div className="flex items-center space-x-2">
+                    <RadioGroupItem value="yes" id="yes" />
+                    <Label htmlFor="yes">Yes, this is correct</Label>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <RadioGroupItem value="no" id="no" />
+                    <Label htmlFor="no">No, this is not correct</Label>
+                  </div>
+                </RadioGroup>
               </div>
             </div>
           </FormStep>
