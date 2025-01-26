@@ -14,15 +14,39 @@ import { Label } from "@/components/ui/label";
 const AdditionalParties = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
-  const [role, setRole] = useState('');
-  const [hasAdditionalParties, setHasAdditionalParties] = useState('');
+  const [role, setRole] = useState(() => {
+    // Try to load from history state first, then localStorage
+    const historyState = window.history.state;
+    if (historyState?.role) {
+      return historyState.role;
+    }
+    return localStorage.getItem('roleInTransaction') || '';
+  });
+  
+  const [hasAdditionalParties, setHasAdditionalParties] = useState(() => {
+    // Try to load from history state first, then localStorage
+    const historyState = window.history.state;
+    if (historyState?.hasAdditionalParties) {
+      return historyState.hasAdditionalParties;
+    }
+    return localStorage.getItem('hasAdditionalParties') || '';
+  });
+
+  useEffect(() => {
+    // Save state to history whenever values change
+    window.history.replaceState({ 
+      role,
+      hasAdditionalParties,
+      formData: localStorage.getItem('formData')
+    }, '');
+  }, [role, hasAdditionalParties]);
 
   useEffect(() => {
     // Check if we have the required data
     const roleInTransaction = localStorage.getItem('roleInTransaction');
-    const personalInfo = localStorage.getItem('personalInfo');
+    const formData = localStorage.getItem('formData');
 
-    if (!roleInTransaction || !personalInfo) {
+    if (!roleInTransaction || !formData) {
       toast({
         title: "Error",
         description: "Missing required information. Please start from the beginning.",
@@ -36,7 +60,13 @@ const AdditionalParties = () => {
   }, [navigate, toast]);
 
   const handlePrevious = () => {
-    navigate('/secure-personal-information');
+    // Use browser history if possible
+    if (window.history.state && window.history.length > 1) {
+      navigate(-1);
+    } else {
+      // Fallback to direct navigation to transaction information
+      navigate('/transaction-information');
+    }
   };
 
   const handleNext = () => {

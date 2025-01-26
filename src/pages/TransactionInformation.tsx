@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useToast } from "@/components/ui/use-toast";
 import FormStep from '@/components/FormStep';
@@ -15,9 +15,18 @@ const TransactionInformation = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const [role, setRole] = useState(() => {
-    // Try to load from localStorage
+    // Try to load from history state first, then localStorage
+    const historyState = window.history.state;
+    if (historyState?.role) {
+      return historyState.role;
+    }
     return localStorage.getItem('roleInTransaction') || '';
   });
+
+  // Save state to history whenever role changes
+  useEffect(() => {
+    window.history.replaceState({ role }, '');
+  }, [role]);
 
   const handlePrevious = () => {
     // Clear the role from localStorage when going back
@@ -36,7 +45,7 @@ const TransactionInformation = () => {
       return;
     }
     localStorage.setItem('roleInTransaction', role);
-    navigate('/personal-information');
+    navigate('/additional-parties');
   };
 
   return (

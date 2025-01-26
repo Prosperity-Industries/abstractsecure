@@ -32,11 +32,9 @@ interface FormData {
   ssn: string;
   maritalStatus: string;
   roleInTransaction: string;
-  hasAdditionalParties: string;
   interestedInPropertyManagement: string;
   interestedInInsuranceQuote: string;
   isRefi?: boolean;
-  hasAdditionalTransactionParties?: string;
 }
 
 const DataCollectionForm = () => {
@@ -73,15 +71,48 @@ const DataCollectionForm = () => {
       ssn: '',
       maritalStatus: '',
       roleInTransaction: '',
-      hasAdditionalParties: '',
       interestedInPropertyManagement: '',
       interestedInInsuranceQuote: '',
-      isRefi: undefined,
-      hasAdditionalTransactionParties: ''
+      isRefi: undefined
     };
   });
 
   const [addressConfirmation, setAddressConfirmation] = useState<'yes' | 'no' | null>(null);
+
+  useEffect(() => {
+    // Save form state to browser history
+    const saveStateToHistory = () => {
+      const state = {
+        formData,
+        currentStep,
+        role,
+        addressConfirmation
+      };
+      window.history.replaceState(state, '');
+    };
+
+    // Save state whenever it changes
+    saveStateToHistory();
+
+    // Handle popstate (browser back/forward)
+    const handlePopState = (event: PopStateEvent) => {
+      if (event.state) {
+        setFormData(event.state.formData);
+        setCurrentStep(event.state.currentStep);
+        setRole(event.state.role);
+        setAddressConfirmation(event.state.addressConfirmation);
+        
+        // Also update localStorage to keep it in sync
+        localStorage.setItem('formData', JSON.stringify(event.state.formData));
+        if (event.state.role) {
+          localStorage.setItem('roleInTransaction', event.state.role);
+        }
+      }
+    };
+
+    window.addEventListener('popstate', handlePopState);
+    return () => window.removeEventListener('popstate', handlePopState);
+  }, [formData, currentStep, role, addressConfirmation]);
 
   // Update role when it changes in localStorage
   useEffect(() => {
@@ -123,7 +154,7 @@ const DataCollectionForm = () => {
     }));
   };
 
-  const handleSelectChange = (value: string, field: keyof FormData) => {
+  const handleSelectChange = (field: keyof FormData, value: string) => {
     setFormData(prev => {
       const newData = {
         ...prev,
@@ -294,11 +325,9 @@ const DataCollectionForm = () => {
         ssn: '',
         maritalStatus: '',
         roleInTransaction: '',
-        hasAdditionalParties: '',
         interestedInPropertyManagement: '',
         interestedInInsuranceQuote: '',
-        isRefi: undefined,
-        hasAdditionalTransactionParties: ''
+        isRefi: undefined
       });
 
       // Return to first step
@@ -409,7 +438,6 @@ const DataCollectionForm = () => {
                   value={formData.fullName}
                   onChange={handleInputChange}
                   placeholder="Enter your full name"
-                  required
                 />
               </div>
               <div>
@@ -420,7 +448,6 @@ const DataCollectionForm = () => {
                   type="date"
                   value={formData.dateOfBirth}
                   onChange={handleInputChange}
-                  required
                 />
               </div>
               <div>
@@ -428,17 +455,17 @@ const DataCollectionForm = () => {
                 <Input
                   id="ssn"
                   name="ssn"
+                  type="password"
                   value={formData.ssn}
                   onChange={handleInputChange}
                   placeholder="Enter your SSN"
-                  required
                 />
               </div>
               <div>
                 <Label htmlFor="maritalStatus">Marital Status</Label>
                 <Select
                   value={formData.maritalStatus}
-                  onValueChange={(value) => handleSelectChange(value, 'maritalStatus')}
+                  onValueChange={(value) => handleSelectChange('maritalStatus', value)}
                 >
                   <SelectTrigger>
                     <SelectValue placeholder="Select marital status" />
@@ -448,23 +475,6 @@ const DataCollectionForm = () => {
                     <SelectItem value="married">Married</SelectItem>
                     <SelectItem value="divorced">Divorced</SelectItem>
                     <SelectItem value="widowed">Widowed</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              <div>
-                <Label htmlFor="hasAdditionalTransactionParties">
-                  {`Are there additional ${role === 'buyer' ? 'Buyers' : 'Sellers'}?`}
-                </Label>
-                <Select
-                  value={formData.hasAdditionalTransactionParties}
-                  onValueChange={(value) => handleSelectChange(value, 'hasAdditionalTransactionParties')}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select yes or no" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="yes">Yes</SelectItem>
-                    <SelectItem value="no">No</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
