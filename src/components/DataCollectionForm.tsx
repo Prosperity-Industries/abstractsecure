@@ -15,6 +15,8 @@ import { loadTestData } from '@/utils/tempTestData';
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { formatSSN, validateSSN } from '@/utils/validation';
 import { Button } from "@/components/ui/button";
+import { uploadToGoogleDrive, initializeGoogleAuth } from '@/utils/googleDrive';
+import type { PhotoUploadResult } from '@/types';
 
 interface AdditionalParty {
   name: string;
@@ -25,6 +27,7 @@ interface AdditionalParty {
   maritalStatus: string;
   hasMoreParties: string;
   photoId?: File;
+  photoIdUrl?: string;
 }
 
 interface FormData {
@@ -41,6 +44,7 @@ interface FormData {
   hasAdditionalParties: string;
   isRefi?: boolean;
   photoId?: File;
+  photoIdUrl?: string;
 }
 
 // Marital status constants
@@ -80,7 +84,8 @@ const DataCollectionForm = () => {
       interestedInInsuranceQuote: '',
       hasAdditionalParties: '',
       isRefi: undefined,
-      photoId: undefined
+      photoId: undefined,
+      photoIdUrl: undefined
     };
   });
 
@@ -96,7 +101,8 @@ const DataCollectionForm = () => {
     ssn: '',
     maritalStatus: '',
     hasMoreParties: '',
-    photoId: undefined
+    photoId: undefined,
+    photoIdUrl: undefined
   });
 
   const MAX_ADDITIONAL_PARTIES = 4;
@@ -158,6 +164,18 @@ const DataCollectionForm = () => {
     window.addEventListener('storage', handleStorageChange);
     return () => window.removeEventListener('storage', handleStorageChange);
   }, [role]);
+
+  useEffect(() => {
+    // Initialize Google Auth when component mounts
+    initializeGoogleAuth().catch(error => {
+      console.error('Error initializing Google Auth:', error);
+      toast({
+        title: "Error",
+        description: "Failed to initialize Google Drive integration. Some features may not work.",
+        variant: "destructive",
+      });
+    });
+  }, []);
 
   const totalSteps = 8;
 
@@ -365,7 +383,8 @@ const DataCollectionForm = () => {
       interestedInInsuranceQuote: '',
       hasAdditionalParties: '',
       isRefi: undefined,
-      photoId: undefined
+      photoId: undefined,
+      photoIdUrl: undefined
     };
     
     setFormData(emptyForm);
@@ -382,7 +401,8 @@ const DataCollectionForm = () => {
       ssn: '',
       maritalStatus: '',
       hasMoreParties: '',
-      photoId: undefined
+      photoId: undefined,
+      photoIdUrl: undefined
     });
     
     // Clear localStorage
@@ -550,7 +570,8 @@ const DataCollectionForm = () => {
           ssn: '',
           maritalStatus: '',
           hasMoreParties: '',
-          photoId: undefined
+          photoId: undefined,
+          photoIdUrl: undefined
         });
         return; // Stay on the same step but with clean form
       } else {
@@ -594,35 +615,42 @@ const DataCollectionForm = () => {
         };
 
         // Make final submission API call to webhook2
+        const webhookData = {
+          "title-order-number": formData.titleOrderNumber,
+          "title-file-number": formData.titleFileNumber,
+          "full-name": formData.fullName,
+          "property-address": formData.propertyAddress,
+          "date-of-birth": formData.dateOfBirth,
+          "ssn": formData.ssn,
+          "marital-status": getMaritalStatusValue(formData.maritalStatus),
+          "role-in-transaction": formData.roleInTransaction,
+          "interested-in-property-management": formData.interestedInPropertyManagement === 'yes',
+          "interested-in-insurance-quote": formData.interestedInInsuranceQuote === 'yes',
+          "photo-id-url": formData.photoIdUrl || '',
+          "has-additional-parties": formData.hasAdditionalParties === 'yes',
+        };
+
+        // Add additional parties if they exist
+        if (formData.hasAdditionalParties === 'yes' && additionalParties.length > 0) {
+          additionalParties.forEach((party, index) => {
+            webhookData[`additional_party${index + 1}`] = {
+              "full-name": party.name,
+              "phone": party.phone,
+              "email": party.email,
+              "date-of-birth": party.dateOfBirth,
+              "ssn": party.ssn,
+              "marital-status": getMaritalStatusValue(party.maritalStatus),
+              "photo-id-url": party.photoIdUrl || ''
+            };
+          });
+        }
+
         const response = await fetch('https://hook.us2.make.com/xohysh3bqv211obzpo3uo3kb4bkjgtws', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
           },
-          body: JSON.stringify({
-            title_file: formData.titleFileNumber,
-            property_address: formData.propertyAddress,
-            full_name: formData.fullName,
-            date_of_birth: formatDateForWebhook(formData.dateOfBirth),
-            ssn: formData.ssn,
-            'marital-status': getMaritalStatusValue(formData.maritalStatus),
-            role_in_transaction: formData.roleInTransaction,
-            has_additional_parties: formData.hasAdditionalParties,
-            interested_in_property_management: formData.interestedInPropertyManagement,
-            interested_in_insurance_quote: formData.interestedInInsuranceQuote,
-            address_confirmation: addressConfirmation,
-            additional_parties: additionalParties.reduce((acc, party, index) => ({
-              ...acc,
-              [`additional_party${index + 1}`]: {
-                name: party.name,
-                phone: party.phone,
-                email: party.email,
-                date_of_birth: formatDateForWebhook(party.dateOfBirth),
-                ssn: party.ssn,
-                'marital-status': getMaritalStatusValue(party.maritalStatus)
-              }
-            }), {})
-          }),
+          body: JSON.stringify(webhookData),
         });
 
         if (!response.ok) {
@@ -673,30 +701,62 @@ const DataCollectionForm = () => {
   const handlePhotoIdUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (file) {
-      // Create preview
-      const preview = URL.createObjectURL(file);
-      setPhotoIdPreview(preview);
-      
-      // Update form data
-      setFormData(prev => ({ ...prev, photoId: file }));
-      
-      toast({
-        title: "Photo ID Uploaded",
-        description: "Your photo ID has been successfully uploaded.",
-      });
+      try {
+        // Create preview
+        const preview = URL.createObjectURL(file);
+        setPhotoIdPreview(preview);
+        
+        // Update form data with file
+        setFormData(prev => ({ ...prev, photoId: file }));
+
+        // Upload to Google Drive
+        const fileName = `${formData.fullName.replace(/\s+/g, '_')}_ID${file.name.substring(file.name.lastIndexOf('.'))}`;
+        const url = await uploadToGoogleDrive(file, fileName);
+        
+        // Update form data with URL
+        setFormData(prev => ({ ...prev, photoIdUrl: url }));
+        
+        toast({
+          title: "Photo ID Uploaded",
+          description: "Your photo ID has been successfully uploaded to Google Drive.",
+        });
+      } catch (error) {
+        console.error('Error uploading photo ID:', error);
+        toast({
+          title: "Upload Error",
+          description: "Failed to upload photo ID. Please try again.",
+          variant: "destructive",
+        });
+      }
     }
   };
 
   const handleAdditionalPartyPhotoIdUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (file) {
-      // Update additional party data
-      setAdditionalParty(prev => ({ ...prev, photoId: file }));
-      
-      toast({
-        title: "Photo ID Uploaded",
-        description: "The additional party's photo ID has been successfully uploaded.",
-      });
+      try {
+        // Update additional party data with file
+        setAdditionalParty(prev => ({ ...prev, photoId: file }));
+
+        // Upload to Google Drive
+        const fileName = `${additionalParty.name.replace(/\s+/g, '_')}_ID${file.name.substring(file.name.lastIndexOf('.'))}`;
+        const url = await uploadToGoogleDrive(file, fileName);
+        
+        // Update additional party data with URL
+        setAdditionalParty(prev => ({ ...prev, photoIdUrl: url }));
+        
+        toast({
+          title: "Photo ID Uploaded",
+          description: "The additional party's photo ID has been successfully uploaded to Google Drive.",
+        });
+      } catch (error) {
+        console.error('Error uploading additional party photo ID:', error);
+        toast({
+          title: "Upload Error",
+          description: "Failed to upload photo ID. Please try again.",
+          variant: "destructive",
+        });
+      }
     }
   };
 
