@@ -616,33 +616,36 @@ const DataCollectionForm = () => {
 
         // Make final submission API call to webhook2
         const webhookData = {
-          "title-order-number": formData.titleOrderNumber,
-          "title-file-number": formData.titleFileNumber,
-          "full-name": formData.fullName,
-          "property-address": formData.propertyAddress,
-          "date-of-birth": formData.dateOfBirth,
+          "title_file": formData.titleFileNumber,
+          "property_address": formData.propertyAddress,
+          "full_name": formData.fullName,
+          "date_of_birth": formatDateForWebhook(formData.dateOfBirth),
           "ssn": formData.ssn,
           "marital-status": getMaritalStatusValue(formData.maritalStatus),
-          "role-in-transaction": formData.roleInTransaction,
-          "interested-in-property-management": formData.interestedInPropertyManagement === 'yes',
-          "interested-in-insurance-quote": formData.interestedInInsuranceQuote === 'yes',
-          "photo-id-url": formData.photoIdUrl || '',
-          "has-additional-parties": formData.hasAdditionalParties === 'yes',
+          "role_in_transaction": formData.roleInTransaction,
+          "has_additional_parties": formData.hasAdditionalParties === 'yes',
+          "interested_in_property_management": formData.interestedInPropertyManagement === 'yes',
+          "interested_in_insurance_quote": formData.interestedInInsuranceQuote === 'yes',
+          "address_confirmation": addressConfirmation,
+          "photo_id_url": formData.photoIdUrl || ''
         };
 
         // Add additional parties if they exist
         if (formData.hasAdditionalParties === 'yes' && additionalParties.length > 0) {
-          additionalParties.forEach((party, index) => {
-            webhookData[`additional_party${index + 1}`] = {
-              "full-name": party.name,
+          const additionalPartiesData = additionalParties.reduce((acc, party, index) => ({
+            ...acc,
+            [`additional_party${index + 1}`]: {
+              "full_name": party.name,
               "phone": party.phone,
               "email": party.email,
-              "date-of-birth": party.dateOfBirth,
+              "date_of_birth": formatDateForWebhook(party.dateOfBirth),
               "ssn": party.ssn,
               "marital-status": getMaritalStatusValue(party.maritalStatus),
-              "photo-id-url": party.photoIdUrl || ''
-            };
-          });
+              "photo_id_url": party.photoIdUrl || ''
+            }
+          }), {});
+
+          webhookData.additional_parties = additionalPartiesData;
         }
 
         const response = await fetch('https://hook.us2.make.com/xohysh3bqv211obzpo3uo3kb4bkjgtws', {
