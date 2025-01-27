@@ -825,7 +825,7 @@ const DataCollectionForm = () => {
             onPrevious={handlePrevious}
             nextButtonText="Next"
           >
-            <div className="space-y-4 mb-32">
+            <div className="space-y-4">
               <div>
                 <Label htmlFor="fullName">Full Name</Label>
                 <Input
@@ -961,7 +961,7 @@ const DataCollectionForm = () => {
             onPrevious={handlePrevious}
             nextButtonText="Next"
           >
-            <div className="space-y-4 mb-32">
+            <div className="space-y-4">
               <div>
                 <Label htmlFor="additionalPartyName">Full Name</Label>
                 <Input
