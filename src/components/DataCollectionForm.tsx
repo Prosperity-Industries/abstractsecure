@@ -121,7 +121,7 @@ const DataCollectionForm = () => {
     return () => window.removeEventListener('storage', handleStorageChange);
   }, [role]);
 
-  const totalSteps = 9;
+  const totalSteps = 7;
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -248,6 +248,18 @@ const DataCollectionForm = () => {
         toast({
           title: "Error",
           description: "Please contact support to correct the property address",
+          variant: "destructive",
+        });
+        return;
+      }
+    }
+
+    // Validate transaction role before proceeding
+    if (currentStep === 2) {
+      if (!formData.roleInTransaction) {
+        toast({
+          title: "Error",
+          description: "Please select your role in the transaction",
           variant: "destructive",
         });
         return;
@@ -400,8 +412,20 @@ const DataCollectionForm = () => {
       }
     }
 
+    // Validate transaction role before proceeding
+    if (currentStep === 2) {
+      if (!formData.roleInTransaction) {
+        toast({
+          title: "Error",
+          description: "Please select your role in the transaction",
+          variant: "destructive",
+        });
+        return;
+      }
+    }
+
     // For final submission (insurance quote step)
-    if (currentStep === 5) {
+    if (currentStep === 6) {
       if (!formData.interestedInInsuranceQuote) {
         toast({
           title: "Error",
@@ -415,6 +439,13 @@ const DataCollectionForm = () => {
         setIsSubmitting(true);
         console.log('Submitting final form data:', formData); // Debug log
 
+        // Helper function to format date from yyyy-mm-dd to dd/mm/yyyy
+        const formatDateForWebhook = (dateString: string): string => {
+          if (!dateString) return '';
+          const [year, month, day] = dateString.split('-');
+          return `${day}/${month}/${year}`;
+        };
+
         // Make final submission API call to webhook2
         const response = await fetch('https://hook.us2.make.com/xohysh3bqv211obzpo3uo3kb4bkjgtws', {
           method: 'POST',
@@ -425,7 +456,7 @@ const DataCollectionForm = () => {
             title_file: formData.titleFileNumber,
             property_address: formData.propertyAddress,
             full_name: formData.fullName,
-            date_of_birth: formData.dateOfBirth,
+            date_of_birth: formatDateForWebhook(formData.dateOfBirth),
             ssn: formData.ssn,
             marital_status: formData.maritalStatus,
             role_in_transaction: formData.roleInTransaction,
@@ -550,8 +581,39 @@ const DataCollectionForm = () => {
 
         {currentStep === 2 && (
           <FormStep
-            title="Personal Information"
+            title="Transaction Information"
             currentStep={3}
+            totalSteps={totalSteps}
+            onNext={handleNextUpdated}
+            onPrevious={handlePrevious}
+            nextButtonText="Next"
+          >
+            <div className="space-y-4">
+              <div>
+                <Label htmlFor="roleInTransaction">What is your role in this transaction? <span className="text-red-500">*</span></Label>
+                <Select
+                  value={formData.roleInTransaction}
+                  onValueChange={(value) => handleSelectChange('roleInTransaction', value)}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select your role" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="buyer">Buyer</SelectItem>
+                    <SelectItem value="seller">Seller</SelectItem>
+                    <SelectItem value="realtor">Realtor</SelectItem>
+                    <SelectItem value="lender">Lender</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+          </FormStep>
+        )}
+
+        {currentStep === 3 && (
+          <FormStep
+            title="Personal Information"
+            currentStep={4}
             totalSteps={totalSteps}
             onNext={handleNextUpdated}
             onPrevious={handlePrevious}
@@ -610,10 +672,10 @@ const DataCollectionForm = () => {
           </FormStep>
         )}
         
-        {currentStep === 3 && (
+        {currentStep === 4 && (
           <FormStep
             title="Additional Parties"
-            currentStep={4}
+            currentStep={5}
             totalSteps={totalSteps}
             onNext={handleNextUpdated}
             onPrevious={handlePrevious}
@@ -640,10 +702,10 @@ const DataCollectionForm = () => {
           </FormStep>
         )}
 
-        {currentStep === 4 && (
+        {currentStep === 5 && (
           <FormStep
             title="Property Management"
-            currentStep={5}
+            currentStep={6}
             totalSteps={totalSteps}
             onNext={handleNextUpdated}
             onPrevious={handlePrevious}
@@ -670,10 +732,10 @@ const DataCollectionForm = () => {
           </FormStep>
         )}
 
-        {currentStep === 5 && (
+        {currentStep === 6 && (
           <FormStep
             title="Insurance Quote"
-            currentStep={6}
+            currentStep={7}
             totalSteps={totalSteps}
             onNext={handleNextUpdated}
             onPrevious={handlePrevious}
