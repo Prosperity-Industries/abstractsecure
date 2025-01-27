@@ -13,7 +13,7 @@ import {
 } from "@/components/ui/select";
 import { loadTestData } from '@/utils/tempTestData';
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { formatSSN } from '@/utils/validation';
+import { formatSSN, validateSSN } from '@/utils/validation';
 
 interface AdditionalParty {
   name: string;
@@ -22,6 +22,7 @@ interface AdditionalParty {
   dateOfBirth: string;
   ssn: string;
   maritalStatus: string;
+  hasMoreParties: string;
 }
 
 interface FormData {
@@ -73,14 +74,19 @@ const DataCollectionForm = () => {
 
   const [addressConfirmation, setAddressConfirmation] = useState<'yes' | 'no' | null>(null);
 
+  const [additionalParties, setAdditionalParties] = useState<AdditionalParty[]>([]);
+  const [currentPartyIndex, setCurrentPartyIndex] = useState(0);
   const [additionalParty, setAdditionalParty] = useState<AdditionalParty>({
     name: '',
     phone: '',
     email: '',
     dateOfBirth: '',
     ssn: '',
-    maritalStatus: ''
+    maritalStatus: '',
+    hasMoreParties: ''
   });
+
+  const MAX_ADDITIONAL_PARTIES = 4;
 
   useEffect(() => {
     // Save form state to browser history
@@ -90,6 +96,8 @@ const DataCollectionForm = () => {
         currentStep,
         role,
         addressConfirmation,
+        additionalParties,
+        currentPartyIndex,
         additionalParty
       };
       window.history.replaceState(state, '');
@@ -105,6 +113,8 @@ const DataCollectionForm = () => {
         setCurrentStep(event.state.currentStep);
         setRole(event.state.role);
         setAddressConfirmation(event.state.addressConfirmation);
+        setAdditionalParties(event.state.additionalParties);
+        setCurrentPartyIndex(event.state.currentPartyIndex);
         setAdditionalParty(event.state.additionalParty);
         
         // Also update localStorage to keep it in sync
@@ -117,7 +127,7 @@ const DataCollectionForm = () => {
 
     window.addEventListener('popstate', handlePopState);
     return () => window.removeEventListener('popstate', handlePopState);
-  }, [formData, currentStep, role, addressConfirmation, additionalParty]);
+  }, [formData, currentStep, role, addressConfirmation, additionalParties, currentPartyIndex, additionalParty]);
 
   // Update role when it changes in localStorage
   useEffect(() => {
@@ -295,6 +305,20 @@ const DataCollectionForm = () => {
       }
     }
 
+    // Check for additional party form validation
+    if (currentStep === 5 && formData.hasAdditionalParties === 'yes') {
+      if (!additionalParty.name) {
+        toast({
+          title: "Error",
+          description: "Please enter the additional party's name",
+          variant: "destructive",
+        });
+        return;
+      }
+      // Store additional party data in localStorage
+      localStorage.setItem('additionalParty', JSON.stringify(additionalParty));
+    }
+
     // For other steps, just proceed
     setCurrentStep(prev => prev + 1);
   };
@@ -330,13 +354,16 @@ const DataCollectionForm = () => {
     setCurrentStep(0);
     setAddressConfirmation(null);
     setRole('');
+    setAdditionalParties([]);
+    setCurrentPartyIndex(0);
     setAdditionalParty({
       name: '',
       phone: '',
       email: '',
       dateOfBirth: '',
       ssn: '',
-      maritalStatus: ''
+      maritalStatus: '',
+      hasMoreParties: ''
     });
     
     // Clear localStorage
@@ -466,6 +493,53 @@ const DataCollectionForm = () => {
       }
     }
 
+    // Check for additional party form validation
+    if (currentStep === 5 && formData.hasAdditionalParties === 'yes') {
+      if (!additionalParty.name) {
+        toast({
+          title: "Error",
+          description: "Please enter the additional party's name",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      // Store the current additional party data
+      const updatedParties = [...additionalParties];
+      if (currentPartyIndex < updatedParties.length) {
+        updatedParties[currentPartyIndex] = additionalParty;
+      } else {
+        updatedParties.push(additionalParty);
+      }
+      setAdditionalParties(updatedParties);
+
+      // If this is the last additional party, move to property management
+      if (getCurrentPartyNumber() === MAX_ADDITIONAL_PARTIES) {
+        setCurrentStep(prev => prev + 1);
+        return;
+      }
+
+      // Check if there are more parties to add
+      if (additionalParty.hasMoreParties === 'yes') {
+        // Reset the form for the next party
+        setCurrentPartyIndex(prev => prev + 1);
+        setAdditionalParty({
+          name: '',
+          phone: '',
+          email: '',
+          dateOfBirth: '',
+          ssn: '',
+          maritalStatus: '',
+          hasMoreParties: ''
+        });
+        return; // Stay on the same step but with clean form
+      } else {
+        // No more parties, move to property management
+        setCurrentStep(prev => prev + 1);
+        return;
+      }
+    }
+
     // For final submission (insurance quote step)
     if (currentStep === 7) {
       if (!formData.interestedInInsuranceQuote) {
@@ -506,12 +580,14 @@ const DataCollectionForm = () => {
             interested_in_property_management: formData.interestedInPropertyManagement,
             interested_in_insurance_quote: formData.interestedInInsuranceQuote,
             address_confirmation: addressConfirmation,
-            additional_party_name: additionalParty.name,
-            additional_party_phone: additionalParty.phone,
-            additional_party_email: additionalParty.email,
-            additional_party_date_of_birth: formatDateForWebhook(additionalParty.dateOfBirth),
-            additional_party_ssn: additionalParty.ssn,
-            additional_party_marital_status: additionalParty.maritalStatus
+            additional_parties: additionalParties.map(party => ({
+              name: party.name,
+              phone: party.phone,
+              email: party.email,
+              date_of_birth: formatDateForWebhook(party.dateOfBirth),
+              ssn: party.ssn,
+              marital_status: party.maritalStatus
+            }))
           }),
         });
 
@@ -555,6 +631,10 @@ const DataCollectionForm = () => {
     // For other steps, just proceed
     setCurrentStep(prev => prev + 1);
   };
+
+  const getCurrentPartyNumber = () => currentPartyIndex + 1;
+
+  const isLastAdditionalParty = () => getCurrentPartyNumber() === MAX_ADDITIONAL_PARTIES;
 
   return (
     <div className="min-h-screen flex flex-col items-center justify-start p-4 bg-gradient-to-b from-blue-50 to-white">
@@ -646,7 +726,7 @@ const DataCollectionForm = () => {
                   <SelectTrigger>
                     <SelectValue placeholder="Select your role" />
                   </SelectTrigger>
-                  <SelectContent>
+                  <SelectContent className="bg-white border shadow-md p-2 rounded-md">
                     <SelectItem value="buyer">Buyer</SelectItem>
                     <SelectItem value="seller">Seller</SelectItem>
                   </SelectContent>
@@ -706,7 +786,7 @@ const DataCollectionForm = () => {
                   <SelectTrigger>
                     <SelectValue placeholder="Select marital status" />
                   </SelectTrigger>
-                  <SelectContent>
+                  <SelectContent className="bg-white border shadow-md p-2 rounded-md">
                     <SelectItem value="single">Single</SelectItem>
                     <SelectItem value="married">Married</SelectItem>
                     <SelectItem value="divorced">Divorced</SelectItem>
@@ -750,7 +830,7 @@ const DataCollectionForm = () => {
 
         {currentStep === 5 && formData.hasAdditionalParties === 'yes' && (
           <FormStep
-            title="Additional Party #1"
+            title={`Additional Party #${getCurrentPartyNumber()}`}
             currentStep={6}
             totalSteps={totalSteps}
             onNext={handleNextUpdated}
@@ -764,7 +844,9 @@ const DataCollectionForm = () => {
                   id="additionalPartyName"
                   name="name"
                   value={additionalParty.name}
-                  onChange={(e) => setAdditionalParty(prev => ({ ...prev, name: e.target.value }))}
+                  onChange={(e) => {
+                    setAdditionalParty(prev => ({ ...prev, name: e.target.value }));
+                  }}
                   placeholder="Enter full name"
                 />
               </div>
@@ -774,7 +856,9 @@ const DataCollectionForm = () => {
                   id="additionalPartyPhone"
                   name="phone"
                   value={additionalParty.phone}
-                  onChange={(e) => setAdditionalParty(prev => ({ ...prev, phone: e.target.value }))}
+                  onChange={(e) => {
+                    setAdditionalParty(prev => ({ ...prev, phone: e.target.value }));
+                  }}
                   placeholder="Enter phone number"
                 />
               </div>
@@ -785,7 +869,9 @@ const DataCollectionForm = () => {
                   name="email"
                   type="email"
                   value={additionalParty.email}
-                  onChange={(e) => setAdditionalParty(prev => ({ ...prev, email: e.target.value }))}
+                  onChange={(e) => {
+                    setAdditionalParty(prev => ({ ...prev, email: e.target.value }));
+                  }}
                   placeholder="Enter email address"
                 />
               </div>
@@ -796,7 +882,9 @@ const DataCollectionForm = () => {
                   name="dateOfBirth"
                   type="date"
                   value={additionalParty.dateOfBirth}
-                  onChange={(e) => setAdditionalParty(prev => ({ ...prev, dateOfBirth: e.target.value }))}
+                  onChange={(e) => {
+                    setAdditionalParty(prev => ({ ...prev, dateOfBirth: e.target.value }));
+                  }}
                 />
               </div>
               <div>
@@ -804,8 +892,28 @@ const DataCollectionForm = () => {
                 <Input
                   id="additionalPartySSN"
                   name="ssn"
+                  type="text"
+                  maxLength={11}
                   value={additionalParty.ssn}
-                  onChange={(e) => setAdditionalParty(prev => ({ ...prev, ssn: formatSSN(e.target.value) }))}
+                  onChange={(e) => {
+                    try {
+                      const input = e.target.value.replace(/[^\d-]/g, '');
+                      const formattedSSN = formatSSN(input.replace(/-/g, ''));
+                      setAdditionalParty(prev => ({ ...prev, ssn: formattedSSN }));
+                    } catch (error) {
+                      const cleanInput = e.target.value.replace(/[^\d-]/g, '');
+                      setAdditionalParty(prev => ({ ...prev, ssn: cleanInput }));
+                    }
+                  }}
+                  onBlur={(e) => {
+                    if (e.target.value && !validateSSN(e.target.value)) {
+                      toast({
+                        title: "Invalid SSN",
+                        description: "Please enter a valid 9-digit Social Security Number",
+                        variant: "destructive",
+                      });
+                    }
+                  }}
                   placeholder="Enter SSN (XXX-XX-XXXX)"
                 />
               </div>
@@ -813,12 +921,14 @@ const DataCollectionForm = () => {
                 <Label htmlFor="additionalPartyMaritalStatus">Marital Status</Label>
                 <Select
                   value={additionalParty.maritalStatus}
-                  onValueChange={(value) => setAdditionalParty(prev => ({ ...prev, maritalStatus: value }))}
+                  onValueChange={(value) => {
+                    setAdditionalParty(prev => ({ ...prev, maritalStatus: value }));
+                  }}
                 >
                   <SelectTrigger>
                     <SelectValue placeholder="Select marital status" />
                   </SelectTrigger>
-                  <SelectContent>
+                  <SelectContent className="bg-white border shadow-md p-2 rounded-md">
                     <SelectItem value="single">Single</SelectItem>
                     <SelectItem value="married">Married</SelectItem>
                     <SelectItem value="divorced">Divorced</SelectItem>
@@ -826,6 +936,25 @@ const DataCollectionForm = () => {
                   </SelectContent>
                 </Select>
               </div>
+              {!isLastAdditionalParty() && (
+                <div className="mt-8">
+                  <Label htmlFor="hasMoreParties">Are there additional parties?</Label>
+                  <Select
+                    value={additionalParty.hasMoreParties || ''}
+                    onValueChange={(value) => {
+                      setAdditionalParty(prev => ({ ...prev, hasMoreParties: value }));
+                    }}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select yes or no" />
+                    </SelectTrigger>
+                    <SelectContent className="bg-white border shadow-md p-2 rounded-md">
+                      <SelectItem value="yes">Yes</SelectItem>
+                      <SelectItem value="no">No</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              )}
             </div>
           </FormStep>
         )}
