@@ -40,6 +40,14 @@ interface FormData {
   isRefi?: boolean;
 }
 
+// Marital status constants
+const MARITAL_STATUS = {
+  SINGLE: { value: 'single', id: 1 },
+  MARRIED: { value: 'married', id: 2 },
+  WIDOWED: { value: 'widowed', id: 3 },
+  DIVORCED: { value: 'divorced', id: 4 }
+} as const;
+
 const DataCollectionForm = () => {
   const { toast } = useToast();
   const navigate = useNavigate();
@@ -562,6 +570,17 @@ const DataCollectionForm = () => {
           return `${day}/${month}/${year}`;
         };
 
+        // Helper function to convert marital status to integer
+        const getMaritalStatusValue = (status: string): number => {
+          const statusMap = {
+            [MARITAL_STATUS.SINGLE.value]: MARITAL_STATUS.SINGLE.id,
+            [MARITAL_STATUS.MARRIED.value]: MARITAL_STATUS.MARRIED.id,
+            [MARITAL_STATUS.WIDOWED.value]: MARITAL_STATUS.WIDOWED.id,
+            [MARITAL_STATUS.DIVORCED.value]: MARITAL_STATUS.DIVORCED.id
+          };
+          return statusMap[status.toLowerCase()] || MARITAL_STATUS.SINGLE.id;
+        };
+
         // Make final submission API call to webhook2
         const response = await fetch('https://hook.us2.make.com/xohysh3bqv211obzpo3uo3kb4bkjgtws', {
           method: 'POST',
@@ -574,7 +593,7 @@ const DataCollectionForm = () => {
             full_name: formData.fullName,
             date_of_birth: formatDateForWebhook(formData.dateOfBirth),
             ssn: formData.ssn,
-            marital_status: formData.maritalStatus,
+            'marital-status': getMaritalStatusValue(formData.maritalStatus),
             role_in_transaction: formData.roleInTransaction,
             has_additional_parties: formData.hasAdditionalParties,
             interested_in_property_management: formData.interestedInPropertyManagement,
@@ -588,7 +607,7 @@ const DataCollectionForm = () => {
                 email: party.email,
                 date_of_birth: formatDateForWebhook(party.dateOfBirth),
                 ssn: party.ssn,
-                marital_status: party.maritalStatus
+                'marital-status': getMaritalStatusValue(party.maritalStatus)
               }
             }), {})
           }),
@@ -790,10 +809,10 @@ const DataCollectionForm = () => {
                     <SelectValue placeholder="Select marital status" />
                   </SelectTrigger>
                   <SelectContent className="bg-white border shadow-md p-2 rounded-md">
-                    <SelectItem value="single">Single</SelectItem>
-                    <SelectItem value="married">Married</SelectItem>
-                    <SelectItem value="divorced">Divorced</SelectItem>
-                    <SelectItem value="widowed">Widowed</SelectItem>
+                    <SelectItem value={MARITAL_STATUS.SINGLE.value}>Single</SelectItem>
+                    <SelectItem value={MARITAL_STATUS.MARRIED.value}>Married</SelectItem>
+                    <SelectItem value={MARITAL_STATUS.DIVORCED.value}>Divorced</SelectItem>
+                    <SelectItem value={MARITAL_STATUS.WIDOWED.value}>Widowed</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -932,10 +951,10 @@ const DataCollectionForm = () => {
                     <SelectValue placeholder="Select marital status" />
                   </SelectTrigger>
                   <SelectContent className="bg-white border shadow-md p-2 rounded-md">
-                    <SelectItem value="single">Single</SelectItem>
-                    <SelectItem value="married">Married</SelectItem>
-                    <SelectItem value="divorced">Divorced</SelectItem>
-                    <SelectItem value="widowed">Widowed</SelectItem>
+                    <SelectItem value={MARITAL_STATUS.SINGLE.value}>Single</SelectItem>
+                    <SelectItem value={MARITAL_STATUS.MARRIED.value}>Married</SelectItem>
+                    <SelectItem value={MARITAL_STATUS.DIVORCED.value}>Divorced</SelectItem>
+                    <SelectItem value={MARITAL_STATUS.WIDOWED.value}>Widowed</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
