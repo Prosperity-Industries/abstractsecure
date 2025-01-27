@@ -73,6 +73,15 @@ const DataCollectionForm = () => {
 
   const [addressConfirmation, setAddressConfirmation] = useState<'yes' | 'no' | null>(null);
 
+  const [additionalParty, setAdditionalParty] = useState<AdditionalParty>({
+    name: '',
+    phone: '',
+    email: '',
+    dateOfBirth: '',
+    ssn: '',
+    maritalStatus: ''
+  });
+
   useEffect(() => {
     // Save form state to browser history
     const saveStateToHistory = () => {
@@ -80,7 +89,8 @@ const DataCollectionForm = () => {
         formData,
         currentStep,
         role,
-        addressConfirmation
+        addressConfirmation,
+        additionalParty
       };
       window.history.replaceState(state, '');
     };
@@ -95,6 +105,7 @@ const DataCollectionForm = () => {
         setCurrentStep(event.state.currentStep);
         setRole(event.state.role);
         setAddressConfirmation(event.state.addressConfirmation);
+        setAdditionalParty(event.state.additionalParty);
         
         // Also update localStorage to keep it in sync
         localStorage.setItem('formData', JSON.stringify(event.state.formData));
@@ -106,7 +117,7 @@ const DataCollectionForm = () => {
 
     window.addEventListener('popstate', handlePopState);
     return () => window.removeEventListener('popstate', handlePopState);
-  }, [formData, currentStep, role, addressConfirmation]);
+  }, [formData, currentStep, role, addressConfirmation, additionalParty]);
 
   // Update role when it changes in localStorage
   useEffect(() => {
@@ -121,7 +132,7 @@ const DataCollectionForm = () => {
     return () => window.removeEventListener('storage', handleStorageChange);
   }, [role]);
 
-  const totalSteps = 7;
+  const totalSteps = 8;
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -266,19 +277,24 @@ const DataCollectionForm = () => {
       }
     }
 
-    // For final submission
-    if (currentStep === totalSteps - 1) {
-      if (!formData.propertyAddress) {
+    // Check for additional party selection
+    if (currentStep === 4) {
+      if (!formData.hasAdditionalParties) {
         toast({
           title: "Error",
-          description: "Property address is required. Please go back and confirm the address.",
+          description: "Please select whether there are additional parties",
           variant: "destructive",
         });
         return;
       }
-      // Add other final validation here
+      
+      // If they selected no, skip the additional party form
+      if (formData.hasAdditionalParties === 'no') {
+        setCurrentStep(prev => prev + 2); // Skip to property management
+        return;
+      }
     }
-    
+
     // For other steps, just proceed
     setCurrentStep(prev => prev + 1);
   };
@@ -314,6 +330,14 @@ const DataCollectionForm = () => {
     setCurrentStep(0);
     setAddressConfirmation(null);
     setRole('');
+    setAdditionalParty({
+      name: '',
+      phone: '',
+      email: '',
+      dateOfBirth: '',
+      ssn: '',
+      maritalStatus: ''
+    });
     
     // Clear localStorage
     localStorage.removeItem('formData');
@@ -424,8 +448,26 @@ const DataCollectionForm = () => {
       }
     }
 
+    // Check for additional party selection
+    if (currentStep === 4) {
+      if (!formData.hasAdditionalParties) {
+        toast({
+          title: "Error",
+          description: "Please select whether there are additional parties",
+          variant: "destructive",
+        });
+        return;
+      }
+      
+      // If they selected no, skip the additional party form
+      if (formData.hasAdditionalParties === 'no') {
+        setCurrentStep(prev => prev + 2); // Skip to property management
+        return;
+      }
+    }
+
     // For final submission (insurance quote step)
-    if (currentStep === 6) {
+    if (currentStep === 7) {
       if (!formData.interestedInInsuranceQuote) {
         toast({
           title: "Error",
@@ -463,7 +505,13 @@ const DataCollectionForm = () => {
             has_additional_parties: formData.hasAdditionalParties,
             interested_in_property_management: formData.interestedInPropertyManagement,
             interested_in_insurance_quote: formData.interestedInInsuranceQuote,
-            address_confirmation: addressConfirmation
+            address_confirmation: addressConfirmation,
+            additional_party_name: additionalParty.name,
+            additional_party_phone: additionalParty.phone,
+            additional_party_email: additionalParty.email,
+            additional_party_date_of_birth: formatDateForWebhook(additionalParty.dateOfBirth),
+            additional_party_ssn: additionalParty.ssn,
+            additional_party_marital_status: additionalParty.maritalStatus
           }),
         });
 
@@ -588,7 +636,7 @@ const DataCollectionForm = () => {
             onPrevious={handlePrevious}
             nextButtonText="Next"
           >
-            <div className="space-y-4">
+            <div className="space-y-4 mb-20">
               <div>
                 <Label htmlFor="roleInTransaction">What is your role in this transaction? <span className="text-red-500">*</span></Label>
                 <Select
@@ -601,8 +649,6 @@ const DataCollectionForm = () => {
                   <SelectContent>
                     <SelectItem value="buyer">Buyer</SelectItem>
                     <SelectItem value="seller">Seller</SelectItem>
-                    <SelectItem value="realtor">Realtor</SelectItem>
-                    <SelectItem value="lender">Lender</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -619,7 +665,7 @@ const DataCollectionForm = () => {
             onPrevious={handlePrevious}
             nextButtonText="Next"
           >
-            <div className="space-y-4">
+            <div className="space-y-4 mb-32">
               <div>
                 <Label htmlFor="fullName">Full Name</Label>
                 <Input
@@ -702,10 +748,92 @@ const DataCollectionForm = () => {
           </FormStep>
         )}
 
-        {currentStep === 5 && (
+        {currentStep === 5 && formData.hasAdditionalParties === 'yes' && (
+          <FormStep
+            title="Additional Party #1"
+            currentStep={6}
+            totalSteps={totalSteps}
+            onNext={handleNextUpdated}
+            onPrevious={handlePrevious}
+            nextButtonText="Next"
+          >
+            <div className="space-y-4 mb-32">
+              <div>
+                <Label htmlFor="additionalPartyName">Full Name</Label>
+                <Input
+                  id="additionalPartyName"
+                  name="name"
+                  value={additionalParty.name}
+                  onChange={(e) => setAdditionalParty(prev => ({ ...prev, name: e.target.value }))}
+                  placeholder="Enter full name"
+                />
+              </div>
+              <div>
+                <Label htmlFor="additionalPartyPhone">Phone Number</Label>
+                <Input
+                  id="additionalPartyPhone"
+                  name="phone"
+                  value={additionalParty.phone}
+                  onChange={(e) => setAdditionalParty(prev => ({ ...prev, phone: e.target.value }))}
+                  placeholder="Enter phone number"
+                />
+              </div>
+              <div>
+                <Label htmlFor="additionalPartyEmail">Email</Label>
+                <Input
+                  id="additionalPartyEmail"
+                  name="email"
+                  type="email"
+                  value={additionalParty.email}
+                  onChange={(e) => setAdditionalParty(prev => ({ ...prev, email: e.target.value }))}
+                  placeholder="Enter email address"
+                />
+              </div>
+              <div>
+                <Label htmlFor="additionalPartyDOB">Date of Birth</Label>
+                <Input
+                  id="additionalPartyDOB"
+                  name="dateOfBirth"
+                  type="date"
+                  value={additionalParty.dateOfBirth}
+                  onChange={(e) => setAdditionalParty(prev => ({ ...prev, dateOfBirth: e.target.value }))}
+                />
+              </div>
+              <div>
+                <Label htmlFor="additionalPartySSN">Social Security Number</Label>
+                <Input
+                  id="additionalPartySSN"
+                  name="ssn"
+                  value={additionalParty.ssn}
+                  onChange={(e) => setAdditionalParty(prev => ({ ...prev, ssn: formatSSN(e.target.value) }))}
+                  placeholder="Enter SSN (XXX-XX-XXXX)"
+                />
+              </div>
+              <div>
+                <Label htmlFor="additionalPartyMaritalStatus">Marital Status</Label>
+                <Select
+                  value={additionalParty.maritalStatus}
+                  onValueChange={(value) => setAdditionalParty(prev => ({ ...prev, maritalStatus: value }))}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select marital status" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="single">Single</SelectItem>
+                    <SelectItem value="married">Married</SelectItem>
+                    <SelectItem value="divorced">Divorced</SelectItem>
+                    <SelectItem value="widowed">Widowed</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+          </FormStep>
+        )}
+
+        {currentStep === 6 && (
           <FormStep
             title="Property Management"
-            currentStep={6}
+            currentStep={7}
             totalSteps={totalSteps}
             onNext={handleNextUpdated}
             onPrevious={handlePrevious}
@@ -732,10 +860,10 @@ const DataCollectionForm = () => {
           </FormStep>
         )}
 
-        {currentStep === 6 && (
+        {currentStep === 7 && (
           <FormStep
             title="Insurance Quote"
-            currentStep={7}
+            currentStep={8}
             totalSteps={totalSteps}
             onNext={handleNextUpdated}
             onPrevious={handlePrevious}
