@@ -14,6 +14,7 @@ import {
 import { loadTestData } from '@/utils/tempTestData';
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { formatSSN, validateSSN } from '@/utils/validation';
+import { Button } from "@/components/ui/button";
 
 interface AdditionalParty {
   name: string;
@@ -23,6 +24,7 @@ interface AdditionalParty {
   ssn: string;
   maritalStatus: string;
   hasMoreParties: string;
+  photoId?: File;
 }
 
 interface FormData {
@@ -38,6 +40,7 @@ interface FormData {
   interestedInInsuranceQuote: string;
   hasAdditionalParties: string;
   isRefi?: boolean;
+  photoId?: File;
 }
 
 // Marital status constants
@@ -76,7 +79,8 @@ const DataCollectionForm = () => {
       interestedInPropertyManagement: '',
       interestedInInsuranceQuote: '',
       hasAdditionalParties: '',
-      isRefi: undefined
+      isRefi: undefined,
+      photoId: undefined
     };
   });
 
@@ -91,10 +95,15 @@ const DataCollectionForm = () => {
     dateOfBirth: '',
     ssn: '',
     maritalStatus: '',
-    hasMoreParties: ''
+    hasMoreParties: '',
+    photoId: undefined
   });
 
   const MAX_ADDITIONAL_PARTIES = 4;
+
+  const [photoIdPreview, setPhotoIdPreview] = useState<string>('');
+  const fileInputRef = React.createRef<HTMLInputElement>();
+  const additionalPartyFileInputRef = React.createRef<HTMLInputElement>();
 
   useEffect(() => {
     // Save form state to browser history
@@ -355,7 +364,8 @@ const DataCollectionForm = () => {
       interestedInPropertyManagement: '',
       interestedInInsuranceQuote: '',
       hasAdditionalParties: '',
-      isRefi: undefined
+      isRefi: undefined,
+      photoId: undefined
     };
     
     setFormData(emptyForm);
@@ -371,7 +381,8 @@ const DataCollectionForm = () => {
       dateOfBirth: '',
       ssn: '',
       maritalStatus: '',
-      hasMoreParties: ''
+      hasMoreParties: '',
+      photoId: undefined
     });
     
     // Clear localStorage
@@ -538,7 +549,8 @@ const DataCollectionForm = () => {
           dateOfBirth: '',
           ssn: '',
           maritalStatus: '',
-          hasMoreParties: ''
+          hasMoreParties: '',
+          photoId: undefined
         });
         return; // Stay on the same step but with clean form
       } else {
@@ -657,6 +669,52 @@ const DataCollectionForm = () => {
   const getCurrentPartyNumber = () => currentPartyIndex + 1;
 
   const isLastAdditionalParty = () => getCurrentPartyNumber() === MAX_ADDITIONAL_PARTIES;
+
+  const handlePhotoIdUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      // Create preview
+      const preview = URL.createObjectURL(file);
+      setPhotoIdPreview(preview);
+      
+      // Update form data
+      setFormData(prev => ({ ...prev, photoId: file }));
+      
+      toast({
+        title: "Photo ID Uploaded",
+        description: "Your photo ID has been successfully uploaded.",
+      });
+    }
+  };
+
+  const handleAdditionalPartyPhotoIdUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      // Update additional party data
+      setAdditionalParty(prev => ({ ...prev, photoId: file }));
+      
+      toast({
+        title: "Photo ID Uploaded",
+        description: "The additional party's photo ID has been successfully uploaded.",
+      });
+    }
+  };
+
+  const triggerFileInput = (isAdditionalParty: boolean = false) => {
+    if (isAdditionalParty) {
+      additionalPartyFileInputRef.current?.click();
+    } else {
+      fileInputRef.current?.click();
+    }
+  };
+
+  useEffect(() => {
+    return () => {
+      if (photoIdPreview) {
+        URL.revokeObjectURL(photoIdPreview);
+      }
+    };
+  }, [photoIdPreview]);
 
   return (
     <div className="min-h-screen flex flex-col items-center justify-start p-4 bg-gradient-to-b from-blue-50 to-white">
@@ -816,6 +874,50 @@ const DataCollectionForm = () => {
                   </SelectContent>
                 </Select>
               </div>
+
+              {/* Photo ID Upload Section */}
+              <div className="space-y-2">
+                <Label>Photo ID</Label>
+                <input
+                  type="file"
+                  ref={fileInputRef}
+                  accept="image/*"
+                  capture="environment"
+                  className="hidden"
+                  onChange={handlePhotoIdUpload}
+                />
+                <div className="flex flex-col gap-2">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => triggerFileInput(false)}
+                    className="w-full"
+                  >
+                    Upload Photo ID
+                  </Button>
+                  {photoIdPreview && (
+                    <div className="relative mt-2">
+                      <img
+                        src={photoIdPreview}
+                        alt="ID Preview"
+                        className="max-w-full h-auto rounded-lg"
+                      />
+                      <Button
+                        type="button"
+                        variant="destructive"
+                        size="sm"
+                        className="absolute top-2 right-2"
+                        onClick={() => {
+                          setPhotoIdPreview('');
+                          setFormData(prev => ({ ...prev, photoId: undefined }));
+                        }}
+                      >
+                        Remove
+                      </Button>
+                    </div>
+                  )}
+                </div>
+              </div>
             </div>
           </FormStep>
         )}
@@ -957,6 +1059,48 @@ const DataCollectionForm = () => {
                     <SelectItem value={MARITAL_STATUS.WIDOWED.value}>Widowed</SelectItem>
                   </SelectContent>
                 </Select>
+              </div>
+              {/* Additional Party Photo ID Upload Section */}
+              <div className="space-y-2">
+                <Label>Photo ID</Label>
+                <input
+                  type="file"
+                  ref={additionalPartyFileInputRef}
+                  accept="image/*"
+                  capture="environment"
+                  className="hidden"
+                  onChange={handleAdditionalPartyPhotoIdUpload}
+                />
+                <div className="flex flex-col gap-2">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => triggerFileInput(true)}
+                    className="w-full"
+                  >
+                    Upload Photo ID
+                  </Button>
+                  {additionalParty.photoId && (
+                    <div className="relative mt-2">
+                      <img
+                        src={URL.createObjectURL(additionalParty.photoId)}
+                        alt="ID Preview"
+                        className="max-w-full h-auto rounded-lg"
+                      />
+                      <Button
+                        type="button"
+                        variant="destructive"
+                        size="sm"
+                        className="absolute top-2 right-2"
+                        onClick={() => {
+                          setAdditionalParty(prev => ({ ...prev, photoId: undefined }));
+                        }}
+                      >
+                        Remove
+                      </Button>
+                    </div>
+                  )}
+                </div>
               </div>
               {!isLastAdditionalParty() && (
                 <div className="mt-8">
