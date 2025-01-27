@@ -580,14 +580,17 @@ const DataCollectionForm = () => {
             interested_in_property_management: formData.interestedInPropertyManagement,
             interested_in_insurance_quote: formData.interestedInInsuranceQuote,
             address_confirmation: addressConfirmation,
-            additional_parties: additionalParties.map(party => ({
-              name: party.name,
-              phone: party.phone,
-              email: party.email,
-              date_of_birth: formatDateForWebhook(party.dateOfBirth),
-              ssn: party.ssn,
-              marital_status: party.maritalStatus
-            }))
+            additional_parties: additionalParties.reduce((acc, party, index) => ({
+              ...acc,
+              [`additional_party${index + 1}`]: {
+                name: party.name,
+                phone: party.phone,
+                email: party.email,
+                date_of_birth: formatDateForWebhook(party.dateOfBirth),
+                ssn: party.ssn,
+                marital_status: party.maritalStatus
+              }
+            }), {})
           }),
         });
 
