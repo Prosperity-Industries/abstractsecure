@@ -1,9 +1,19 @@
 steps:
-  # Build the container image
-  - name: 'gcr.io/cloud-builders/docker'
-    args: ['build', '-t', 'gcr.io/$PROJECT_ID/abstract-secure', '.']
+  # Install dependencies
+  - name: 'node:18'
+    id: 'install'
+    entrypoint: npm
+    args: ['ci']
     env:
-      - 'DOCKER_BUILDKIT=1'
+      - 'NODE_ENV=production'
+    waitFor: ['-']  # Start immediately
+
+  # Build the application
+  - name: 'node:18'
+    id: 'build'
+    entrypoint: npm
+    args: ['run', 'build']
+    env:
       - 'NODE_ENV=production'
       - 'VITE_GOOGLE_CLIENT_ID=${_VITE_GOOGLE_CLIENT_ID}'
       - 'VITE_GOOGLE_PROJECT_ID=${_VITE_GOOGLE_PROJECT_ID}'
@@ -12,13 +22,28 @@ steps:
       - 'VITE_GOOGLE_AUTH_PROVIDER_CERT_URL=${_VITE_GOOGLE_AUTH_PROVIDER_CERT_URL}'
       - 'VITE_GOOGLE_CLIENT_SECRET=${_VITE_GOOGLE_CLIENT_SECRET}'
       - 'VITE_GOOGLE_DRIVE_FOLDER_ID=${_VITE_GOOGLE_DRIVE_FOLDER_ID}'
+    waitFor: ['install']
 
-  # Push the container image to Container Registry
+  # Build the container
   - name: 'gcr.io/cloud-builders/docker'
-    args: ['push', 'gcr.io/$PROJECT_ID/abstract-secure']
+    id: 'docker-build'
+    args: 
+      - 'build'
+      - '--network=cloudbuild'
+      - '-t'
+      - 'gcr.io/$PROJECT_ID/abstract-secure'
+      - '.'
+    waitFor: ['build']
 
-  # Deploy container image to Cloud Run
+  # Push the container
+  - name: 'gcr.io/cloud-builders/docker'
+    id: 'docker-push'
+    args: ['push', 'gcr.io/$PROJECT_ID/abstract-secure']
+    waitFor: ['docker-build']
+
+  # Deploy to Cloud Run
   - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
+    id: 'deploy'
     entrypoint: gcloud
     args:
       - 'run'
@@ -33,13 +58,31 @@ steps:
       - '--allow-unauthenticated'
       - '--port'
       - '8080'
-      - '--memory'
-      - '1Gi'
+    waitFor: ['docker-push']
 
-images:
-  - 'gcr.io/$PROJECT_ID/abstract-secure'
-
+# Configure timeout and logging
 timeout: '1800s'
+queueTtl: '3600s'
 options:
   logging: CLOUD_LOGGING_ONLY
   machineType: 'E2_HIGHCPU_8'
+  diskSizeGb: '100'
+  dynamicSubstitutions: true
+  env:
+    - 'DOCKER_BUILDKIT=1'
+  volumes:
+    - name: 'npm-cache'
+      path: '/root/.npm'
+
+# Define the images to be pushed
+images:
+  - 'gcr.io/$PROJECT_ID/abstract-secure'
+
+# Add tags for better organization
+tags: ['abstract-secure', 'production-deploy']
+
+# Configure artifacts storage
+artifacts:
+  objects:
+    location: 'gs://$PROJECT_ID-builds/'
+    paths: ['dist/**']
