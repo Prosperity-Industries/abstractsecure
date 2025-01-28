@@ -1,16 +1,12 @@
 steps:
   # Install dependencies
   - name: 'node:18'
-    id: 'install'
     entrypoint: npm
     args: ['ci']
-    env:
-      - 'NODE_ENV=production'
-    waitFor: ['-']  # Start immediately
+    timeout: '300s'
 
   # Build the application
   - name: 'node:18'
-    id: 'build'
     entrypoint: npm
     args: ['run', 'build']
     env:
@@ -22,67 +18,41 @@ steps:
       - 'VITE_GOOGLE_AUTH_PROVIDER_CERT_URL=${_VITE_GOOGLE_AUTH_PROVIDER_CERT_URL}'
       - 'VITE_GOOGLE_CLIENT_SECRET=${_VITE_GOOGLE_CLIENT_SECRET}'
       - 'VITE_GOOGLE_DRIVE_FOLDER_ID=${_VITE_GOOGLE_DRIVE_FOLDER_ID}'
-    waitFor: ['install']
+    timeout: '300s'
 
-  # Build the container
+  # Build Docker image
   - name: 'gcr.io/cloud-builders/docker'
-    id: 'docker-build'
-    args: 
-      - 'build'
-      - '--network=cloudbuild'
-      - '-t'
-      - 'gcr.io/$PROJECT_ID/abstract-secure'
-      - '.'
-    waitFor: ['build']
+    args: ['build', '-t', 
+           'us-east4-docker.pkg.dev/${PROJECT_ID}/abstract-secure/app', 
+           '.']
+    timeout: '600s'
 
-  # Push the container
+  # Push Docker image
   - name: 'gcr.io/cloud-builders/docker'
-    id: 'docker-push'
-    args: ['push', 'gcr.io/$PROJECT_ID/abstract-secure']
-    waitFor: ['docker-build']
+    args: ['push', 
+           'us-east4-docker.pkg.dev/${PROJECT_ID}/abstract-secure/app']
 
   # Deploy to Cloud Run
   - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
-    id: 'deploy'
-    entrypoint: gcloud
-    args:
-      - 'run'
-      - 'deploy'
-      - 'abstract-secure'
-      - '--image'
-      - 'gcr.io/$PROJECT_ID/abstract-secure'
-      - '--region'
-      - 'us-east4'
-      - '--platform'
-      - 'managed'
-      - '--allow-unauthenticated'
-      - '--port'
-      - '8080'
-    waitFor: ['docker-push']
+    entrypoint: 'gcloud'
+    args: ['run', 'deploy', 'abstract-secure',
+           '--image', 'us-east4-docker.pkg.dev/${PROJECT_ID}/abstract-secure/app',
+           '--region', 'us-east4',
+           '--platform', 'managed',
+           '--allow-unauthenticated']
+    timeout: '300s'
+    env:
+      - 'CLOUDSDK_COMPUTE_REGION=us-east4'
 
-# Configure timeout and logging
-timeout: '1800s'
-queueTtl: '3600s'
-options:
-  logging: CLOUD_LOGGING_ONLY
-  machineType: 'E2_HIGHCPU_8'
-  diskSizeGb: '100'
-  dynamicSubstitutions: true
-  env:
-    - 'DOCKER_BUILDKIT=1'
-  volumes:
-    - name: 'npm-cache'
-      path: '/root/.npm'
-
-# Define the images to be pushed
-images:
-  - 'gcr.io/$PROJECT_ID/abstract-secure'
-
-# Add tags for better organization
-tags: ['abstract-secure', 'production-deploy']
-
-# Configure artifacts storage
+# Store artifacts
 artifacts:
   objects:
-    location: 'gs://$PROJECT_ID-builds/'
+    location: 'gs://${PROJECT_ID}_cloudbuild/abstract-secure/'
     paths: ['dist/**']
+
+# Configure timeout
+timeout: '1200s'
+
+# Use high-CPU machine
+options:
+  machineType: 'E2_HIGHCPU_8'
