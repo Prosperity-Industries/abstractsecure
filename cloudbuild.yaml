@@ -1,0 +1,42 @@
+steps:
+  # Install dependencies
+  - name: 'gcr.io/cloud-builders/npm'
+    args: ['ci']
+    env:
+      - 'NPM_CONFIG_LOGLEVEL=verbose'
+      - 'NODE_ENV=production'
+    volumes:
+      - name: 'npm-cache'
+        path: '/root/.npm'
+
+  # Build the application
+  - name: 'gcr.io/cloud-builders/npm'
+    args: ['run', 'build']
+    env:
+      - 'VITE_GOOGLE_CLIENT_ID=${_VITE_GOOGLE_CLIENT_ID}'
+      - 'VITE_GOOGLE_PROJECT_ID=${_VITE_GOOGLE_PROJECT_ID}'
+      - 'VITE_GOOGLE_AUTH_URI=${_VITE_GOOGLE_AUTH_URI}'
+      - 'VITE_GOOGLE_TOKEN_URI=${_VITE_GOOGLE_TOKEN_URI}'
+      - 'VITE_GOOGLE_AUTH_PROVIDER_CERT_URL=${_VITE_GOOGLE_AUTH_PROVIDER_CERT_URL}'
+      - 'VITE_GOOGLE_CLIENT_SECRET=${_VITE_GOOGLE_CLIENT_SECRET}'
+      - 'VITE_GOOGLE_DRIVE_FOLDER_ID=${_VITE_GOOGLE_DRIVE_FOLDER_ID}'
+      - 'NODE_ENV=production'
+
+  # Deploy to Cloud Run
+  - name: 'gcr.io/cloud-builders/gcloud'
+    args:
+      - 'run'
+      - 'deploy'
+      - 'abstract-secure'
+      - '--image'
+      - 'gcr.io/$PROJECT_ID/abstract-secure'
+      - '--region'
+      - 'us-east4'
+      - '--platform'
+      - 'managed'
+
+images:
+  - 'gcr.io/$PROJECT_ID/abstract-secure'
+
+options:
+  logging: CLOUD_LOGGING_ONLY
