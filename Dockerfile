@@ -17,6 +17,7 @@ RUN npm install @vitejs/plugin-react @types/node vite --save-dev
 COPY . .
 
 # Build the application
+ENV NODE_OPTIONS=--max_old_space_size=4096
 RUN npm run build
 
 # Production stage
