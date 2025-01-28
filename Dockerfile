@@ -1,15 +1,17 @@
-# Use Node.js for the build stage
+# Build stage
 FROM node:18-alpine AS builder
 
 # Set working directory
 WORKDIR /app
 
 # Copy package files
-COPY package*.json .
-COPY .npmrc .
+COPY package*.json ./
 
-# Install dependencies
-RUN npm ci
+# Install all dependencies (including dev dependencies)
+RUN npm install
+
+# Install Vite and its plugin explicitly
+RUN npm install @vitejs/plugin-react @types/node vite --save-dev
 
 # Copy source code
 COPY . .
@@ -17,7 +19,7 @@ COPY . .
 # Build the application
 RUN npm run build
 
-# Use nginx for serving
+# Production stage
 FROM nginx:alpine
 
 # Copy nginx configuration

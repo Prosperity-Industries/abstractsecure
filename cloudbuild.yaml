@@ -1,8 +1,16 @@
 steps:
-  # Install dependencies
+  # Install dependencies with explicit package installation
   - name: 'node:18'
     entrypoint: npm
-    args: ['ci']
+    args: ['install']
+    env:
+      - 'NODE_ENV=development'
+    timeout: '300s'
+
+  # Explicitly install Vite and its plugin
+  - name: 'node:18'
+    entrypoint: npm
+    args: ['install', '@vitejs/plugin-react', '@types/node', 'vite', '--save-dev']
     timeout: '300s'
 
   # Build the application
@@ -56,3 +64,5 @@ timeout: '1200s'
 # Use high-CPU machine
 options:
   machineType: 'E2_HIGHCPU_8'
+  env:
+    - 'NODE_OPTIONS=--max_old_space_size=8192'
