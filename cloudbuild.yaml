@@ -1,18 +1,10 @@
 steps:
-  # Install dependencies
-  - name: 'gcr.io/cloud-builders/npm'
-    args: ['ci']
+  # Build the container image
+  - name: 'gcr.io/cloud-builders/docker'
+    args: ['build', '-t', 'gcr.io/$PROJECT_ID/abstract-secure', '.']
     env:
-      - 'NPM_CONFIG_LOGLEVEL=verbose'
+      - 'DOCKER_BUILDKIT=1'
       - 'NODE_ENV=production'
-    volumes:
-      - name: 'npm-cache'
-        path: '/root/.npm'
-
-  # Build the application
-  - name: 'gcr.io/cloud-builders/npm'
-    args: ['run', 'build']
-    env:
       - 'VITE_GOOGLE_CLIENT_ID=${_VITE_GOOGLE_CLIENT_ID}'
       - 'VITE_GOOGLE_PROJECT_ID=${_VITE_GOOGLE_PROJECT_ID}'
       - 'VITE_GOOGLE_AUTH_URI=${_VITE_GOOGLE_AUTH_URI}'
@@ -20,10 +12,14 @@ steps:
       - 'VITE_GOOGLE_AUTH_PROVIDER_CERT_URL=${_VITE_GOOGLE_AUTH_PROVIDER_CERT_URL}'
       - 'VITE_GOOGLE_CLIENT_SECRET=${_VITE_GOOGLE_CLIENT_SECRET}'
       - 'VITE_GOOGLE_DRIVE_FOLDER_ID=${_VITE_GOOGLE_DRIVE_FOLDER_ID}'
-      - 'NODE_ENV=production'
 
-  # Deploy to Cloud Run
-  - name: 'gcr.io/cloud-builders/gcloud'
+  # Push the container image to Container Registry
+  - name: 'gcr.io/cloud-builders/docker'
+    args: ['push', 'gcr.io/$PROJECT_ID/abstract-secure']
+
+  # Deploy container image to Cloud Run
+  - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
+    entrypoint: gcloud
     args:
       - 'run'
       - 'deploy'
@@ -34,9 +30,16 @@ steps:
       - 'us-east4'
       - '--platform'
       - 'managed'
+      - '--allow-unauthenticated'
+      - '--port'
+      - '8080'
+      - '--memory'
+      - '1Gi'
 
 images:
   - 'gcr.io/$PROJECT_ID/abstract-secure'
 
+timeout: '1800s'
 options:
   logging: CLOUD_LOGGING_ONLY
+  machineType: 'E2_HIGHCPU_8'
