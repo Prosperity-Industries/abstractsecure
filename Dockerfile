@@ -1,33 +1,27 @@
-# Build stage
+# Base builder stage
 FROM node:18-alpine AS builder
 
 # Set working directory
 WORKDIR /app
 
-# Copy package files
+# Copy package files and install dependencies
 COPY package*.json ./
-
-# Install all dependencies (including dev dependencies)
 RUN npm install
-
-# Install Vite and its plugin explicitly
 RUN npm install @vitejs/plugin-react @types/node vite --save-dev
 
-# Copy source code
+# Copy source code and build the application with memory optimization
 COPY . .
-
-# Build the application
-ENV NODE_OPTIONS=--max_old_space_size=4096
+ENV NODE_OPTIONS=--max_old_space_size=8192
 RUN npm run build
 
-# Production stage
+# Final production stage
 FROM nginx:alpine
-
-# Copy nginx configuration
-COPY nginx.conf /etc/nginx/conf.d/default.conf
 
 # Copy built assets from builder stage
 COPY --from=builder /app/dist /usr/share/nginx/html
+
+# Copy nginx configuration
+COPY nginx.conf /etc/nginx/conf.d/default.conf
 
 # Expose port
 EXPOSE 8080
