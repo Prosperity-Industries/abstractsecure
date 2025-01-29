@@ -9,11 +9,15 @@
     "paths": {
       "@/*": ["./src/*"]
     },
-    "noImplicitAny": false,
-    "noUnusedParameters": false,
-    "skipLibCheck": true,
+    "module": "ESNext",
+    "moduleResolution": "Node",
+    "target": "ESNext",
+    "outDir": "dist",
+    "rootDir": "./server",
+    "strict": true,
+    "esModuleInterop": true,
     "allowJs": true,
-    "noUnusedLocals": false,
-    "strictNullChecks": false
+    "skipLibCheck": true,
+    "resolveJsonModule": true
   }
 }
