@@ -29,22 +29,14 @@ export default defineConfig({
           ],
         },
       },
-      external: [
-        'fs',
-        'url',
-        'util',
-        'events',
-        'stream',
-        'child_process',
-        'os',
-        'path',
-        'querystring',
-        'crypto',
-      ],
     },
     chunkSizeWarningLimit: 1000,
   },
   optimizeDeps: {
     include: ['react', 'react-dom'],
+    exclude: ['child_process']  // Prevent Vite from trying to bundle child_process
+  },
+  define: {
+    'process.env': {},  // Prevent process.env from introducing Node.js-specific behavior
   },
 })
