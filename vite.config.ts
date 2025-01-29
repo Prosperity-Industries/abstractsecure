@@ -40,6 +40,7 @@ export default defineConfig({
         'path',
         'querystring',
         'crypto',
+        'google-auth-library',
       ],
     },
     commonjsOptions: {
