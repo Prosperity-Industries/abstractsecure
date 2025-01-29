@@ -1,16 +1,21 @@
-import express from 'express';
-import { uploadToGoogleDrive } from './utils/googleDrive.js';
+const express = require('express');
+const { uploadToGoogleDrive } = require('./utils/googleDrive'); // Import your function
+const multer = require('multer');
 
 const router = express.Router();
+const upload = multer({ dest: 'uploads/' });
 
-router.post('/upload', async (req, res) => {
+router.post('/upload', upload.single('file'), async (req, res) => {
   try {
-    const { file, fileName } = req.body;
-    const fileId = await uploadToGoogleDrive(file, fileName);
-    res.json({ fileId });
+    const { originalname, path: tempPath } = req.file;
+
+    const fileId = await uploadToGoogleDrive(tempPath, originalname, req.file.mimetype);
+
+    res.status(200).json({ fileId });
+
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
 });
 
-export default router;
+module.exports = router;
