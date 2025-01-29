@@ -1,7 +1,7 @@
-const { google } = require('googleapis');
-const fs = require('fs');
+import { google } from 'googleapis';
+import fs from 'fs';
 
-const uploadToGoogleDrive = async (filePath, fileName, mimeType) => {
+export const uploadToGoogleDrive = async (filePath: string, fileName: string, mimeType: string): Promise<string> => {
   try {
     const auth = new google.auth.GoogleAuth({
       credentials: {
@@ -37,5 +37,3 @@ const uploadToGoogleDrive = async (filePath, fileName, mimeType) => {
     throw new Error(`Google Drive upload failed: ${error.message}`);
   }
 };
-
-module.exports = { uploadToGoogleDrive };
