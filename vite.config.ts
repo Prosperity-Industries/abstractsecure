@@ -1,18 +1,18 @@
-import { defineConfig } from 'vite'
-import react from '@vitejs/plugin-react'
-import path from "path"
+import { defineConfig } from 'vite';
+import react from '@vitejs/plugin-react';
+import path from 'path';
 
-// https://vitejs.dev/config/
 export default defineConfig({
   plugins: [react()],
   resolve: {
     alias: {
-      "@": path.resolve(__dirname, "./src"),
+      '@': path.resolve(__dirname, './src'),
     },
+    preserveSymlinks: true, // Preserve symbolic links when resolving modules
   },
   server: {
     host: '0.0.0.0',
-    port: 7000
+    port: 7000,
   },
   build: {
     outDir: 'dist',
@@ -29,19 +29,30 @@ export default defineConfig({
           ],
         },
       },
+      external: [
+        'fs',
+        'url',
+        'util',
+        'events',
+        'stream',
+        'child_process',
+        'os',
+        'path',
+        'querystring',
+        'crypto',
+      ],
+    },
+    commonjsOptions: {
+      transformMixedEsModules: true, // Enable transformation of mixed ES and CommonJS modules
     },
     chunkSizeWarningLimit: 1000,
   },
   optimizeDeps: {
     include: ['react', 'react-dom'],
-    exclude: ['child_process', 'google-auth-library']
+    exclude: ['child_process', 'google-auth-library'],
   },
   define: {
     'process.env': {},
     global: {},
-  },
-  esbuild: {
-    loader: 'tsx',
-    format: 'esm',  // Force ES modules
   },
 });
