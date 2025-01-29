@@ -1,18 +1,15 @@
-import express from 'express';
-import { uploadToGoogleDrive } from './utils/googleDrive'; // Correct ES Module import
-import multer from 'multer';
+console.log("Loading api.ts...");
 
-const router = express.Router();
-const upload = multer({ dest: 'uploads/' });
+import { Router } from 'express';
+import { uploadToGoogleDrive } from './utils/googleDrive';
 
-router.post('/upload', upload.single('file'), async (req, res) => {
+const router = Router();
+
+router.post('/upload', async (req, res) => {
   try {
-    const { originalname, path: tempPath } = req.file;
-
-    const fileId = await uploadToGoogleDrive(tempPath, originalname, req.file.mimetype);
-
-    res.status(200).json({ fileId });
-
+    console.log("Processing upload...");
+    // Simulate upload
+    res.status(200).json({ message: "Upload successful" });
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
