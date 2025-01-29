@@ -1,6 +1,6 @@
-const express = require('express');
-const cors = require('cors');
-const apiRoutes = require('./api'); // Import API routes
+import express from 'express';
+import cors from 'cors';
+import apiRoutes from './api'; // ✅ Correct ES Module Import
 
 const app = express();
 const PORT = process.env.PORT || 5000;
