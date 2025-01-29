@@ -34,10 +34,14 @@ export default defineConfig({
   },
   optimizeDeps: {
     include: ['react', 'react-dom'],
-    exclude: ['child_process', 'google-auth-library']  // Prevent Vite from trying to bundle child_process
+    exclude: ['child_process', 'google-auth-library']
   },
   define: {
-    'process.env': {},  // Prevent process.env from introducing Node.js-specific behavior
-    global: {}, // Prevent global variables like 'Buffer' from causing issues
+    'process.env': {},
+    global: {},
   },
-})
+  esbuild: {
+    loader: 'tsx',
+    format: 'esm',  // Force ES modules
+  },
+});
