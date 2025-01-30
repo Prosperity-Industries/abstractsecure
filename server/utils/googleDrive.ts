@@ -3,6 +3,7 @@ import fs from 'fs';
 
 export const uploadToGoogleDrive = async (filePath: string, fileName: string, mimeType: string): Promise<string> => {
   try {
+    console.log(`Uploading file: ${filePath}, Name: ${fileName}, Type: ${mimeType}`);
     const auth = new google.auth.GoogleAuth({
       credentials: {
         client_id: process.env.GOOGLE_CLIENT_ID,
