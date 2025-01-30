@@ -1,5 +1,6 @@
 console.log("Loading main.ts...");
 
+import 'dotenv/config';
 import { createServer } from './index';
 
 const PORT = process.env.PORT || 5000;
