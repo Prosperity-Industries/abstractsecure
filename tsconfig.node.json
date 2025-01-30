@@ -19,7 +19,8 @@
     "resolveJsonModule": true,
     "baseUrl": "./",
     "paths": {
-      "@/*": ["src/*"]
+      "@/*": ["src/*"],
+      "@/utils/*": ["server/utils/*"]
     },
     "jsx": "react-jsx"   // ✅ Enables JSX support for TSX files
   },
