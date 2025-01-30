@@ -8,10 +8,10 @@ const router = Router();
 router.post('/upload', async (req, res) => {
   try {
     console.log("Processing upload...");
-    // Simulate upload
     res.status(200).json({ message: "Upload successful" });
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    const errorMessage = (error as Error).message; // Type assertion
+    res.status(500).json({ error: errorMessage });
   }
 });
 
