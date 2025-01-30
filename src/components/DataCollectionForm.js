@@ -6,11 +6,13 @@ import FormStep from './FormStep';
 import { useToast } from "@/components/ui/use-toast";
 import { useNavigate } from 'react-router-dom';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue, } from "@/components/ui/select";
+// import { loadTestData } from '../../src/utils/tempTestData';
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { formatSSN, validateSSN } from '../../utils/validation';
+import { formatSSN, validateSSN } from '@/utils/validation';
+// import { formatSSN, validateSSN } from '../../src/utils/validation';
 import { Button } from "@/components/ui/button";
 // import { uploadToGoogleDrive, initializeGoogleAuth } from '@/utils/googleDrive';
-import { uploadToGoogleDrive } from '@/utils/googleDrive';
+import { uploadToGoogleDrive } from '../../server/utils/googleDrive';
 // Marital status constants
 const MARITAL_STATUS = {
     SINGLE: { value: 'single', id: 1 },
@@ -114,17 +116,20 @@ const DataCollectionForm = () => {
         window.addEventListener('storage', handleStorageChange);
         return () => window.removeEventListener('storage', handleStorageChange);
     }, [role]);
+    /* Function initializeGoogleAuth does not exist in the current scope.
     useEffect(() => {
-        // Initialize Google Auth when component mounts
-        initializeGoogleAuth().catch((error) => {
-            console.error('Error initializing Google Auth:', error);
-            toast({
-                title: "Error",
-                description: "Failed to initialize Google Drive integration. Some features may not work.",
-                variant: "destructive",
-            });
+      // Initialize Google Auth when component mounts
+      initializeGoogleAuth().catch((error: unknown) => {
+        console.error('Error initializing Google Auth:', error);
+        toast({
+          title: "Error",
+          description: "Failed to initialize Google Drive integration. Some features may not work.",
+          variant: "destructive",
         });
+      });
     }, []);
+    
+    */
     const totalSteps = 8;
     const handleInputChange = (e) => {
         const { name, value } = e.target;
