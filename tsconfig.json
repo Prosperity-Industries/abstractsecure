@@ -7,8 +7,8 @@
   "compilerOptions": {
     "baseUrl": "./",
     "paths": {
-      "@/*": ["./src/*"],
-      "@/utils/*": ["./server/utils/*"]
+      "@/*": ["src/*"],
+      "@/utils/*": ["server/utils/*"]
     },
     "module": "ESNext",
     "moduleResolution": "Node",
