@@ -4,26 +4,25 @@
     "lib": ["ES2023"],
     "module": "ESNext",
     "skipLibCheck": true,
-
-    /* Bundler mode */
-    "moduleResolution": "Node",  // ⬅️ Changed from "bundler" to "Node" (Fixes imports)
+    "moduleResolution": "Node",
     "allowImportingTsExtensions": true,
     "isolatedModules": true,
     "moduleDetection": "force",
     "noEmit": true,
-
-    /* Linting */
     "strict": true,
     "noUnusedLocals": false,
     "noUnusedParameters": false,
     "noFallthroughCasesInSwitch": true,
-
-    /* Additional Fixes */
-    "rootDir": "./",       // ⬅️ Ensures server code is correctly resolved
-    "outDir": "./dist",          // ⬅️ Ensures transpiled files go to 'dist/'
-    "esModuleInterop": true,     // ⬅️ Ensures compatibility with CommonJS packages
-    "resolveJsonModule": true    // ⬅️ Allows importing .json files in backend
+    "rootDir": "./",
+    "outDir": "./dist",
+    "esModuleInterop": true,
+    "resolveJsonModule": true,
+    "baseUrl": "./",
+    "paths": {
+      "@/*": ["src/*"]
+    },
+    "jsx": "react-jsx"   // ✅ Enables JSX support for TSX files
   },
-  "include": ["./**/*.ts"],
+  "include": ["./**/*.ts", "./**/*.tsx"],
   "exclude": ["dist", "node_modules"]
 }
