@@ -11,7 +11,7 @@ import {
 } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
-import { validateWebhookPayload, formatSSN } from '@/utils/validation';
+import { validateWebhookPayload, formatSSN } from '../../src/utils/validation';
 
 // Rate limiting configuration
 const RATE_LIMIT_MS = 1000; // 1 second between submissions
