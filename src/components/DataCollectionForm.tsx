@@ -645,7 +645,7 @@ const DataCollectionForm = () => {
             }
           }), {});
 
-          webhookData.additional_parties = additionalPartiesData;
+          webhookData.has_additional_parties = additionalPartiesData;
         }
 
         const response = await fetch('https://hook.us2.make.com/xohysh3bqv211obzpo3uo3kb4bkjgtws', {
