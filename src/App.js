@@ -1,0 +1,18 @@
+import { jsx as _jsx, jsxs as _jsxs } from "react/jsx-runtime";
+import { Toaster } from "@/components/ui/toaster";
+import { Toaster as Sonner } from "@/components/ui/sonner";
+import { TooltipProvider } from "@/components/ui/tooltip";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { BrowserRouter, Routes, Route } from "react-router-dom";
+import Index from "./pages/Index";
+import TransactionInformation from "./pages/TransactionInformation";
+import AdditionalParties from "./pages/AdditionalParties";
+import AdditionalPartyOne from "./pages/AdditionalPartyOne";
+import AdditionalPartyTwo from "./pages/AdditionalPartyTwo";
+import AdditionalPartyThree from "./pages/AdditionalPartyThree";
+import AdditionalPartyFour from "./pages/AdditionalPartyFour";
+import PropertyManagement from "./pages/PropertyManagement";
+import Insurance from "./pages/Insurance";
+const queryClient = new QueryClient();
+const App = () => (_jsx(QueryClientProvider, { client: queryClient, children: _jsxs(TooltipProvider, { children: [_jsx(Toaster, {}), _jsx(Sonner, {}), _jsx(BrowserRouter, { children: _jsxs(Routes, { children: [_jsx(Route, { path: "/", element: _jsx(Index, {}) }), _jsx(Route, { path: "/transaction-information", element: _jsx(TransactionInformation, {}) }), _jsx(Route, { path: "/additional-parties", element: _jsx(AdditionalParties, {}) }), _jsx(Route, { path: "/additional-party-one", element: _jsx(AdditionalPartyOne, {}) }), _jsx(Route, { path: "/additional-party-two", element: _jsx(AdditionalPartyTwo, {}) }), _jsx(Route, { path: "/additional-party-three", element: _jsx(AdditionalPartyThree, {}) }), _jsx(Route, { path: "/additional-party-four", element: _jsx(AdditionalPartyFour, {}) }), _jsx(Route, { path: "/property-management", element: _jsx(PropertyManagement, {}) }), _jsx(Route, { path: "/insurance", element: _jsx(Insurance, {}) })] }) })] }) }));
+export default App;
