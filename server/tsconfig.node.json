@@ -1,6 +1,6 @@
 {
   "compilerOptions": {
-    "target": "ES2022",
+    "target": "ESNext",
     "lib": ["ES2023"],
     "module": "ESNext",
     "skipLibCheck": true,
@@ -19,10 +19,11 @@
     "noFallthroughCasesInSwitch": true,
 
     /* Additional Fixes */
-    "rootDir": "./server",       // ⬅️ Ensures server code is correctly resolved
+    "rootDir": "./",       // ⬅️ Ensures server code is correctly resolved
     "outDir": "./dist",          // ⬅️ Ensures transpiled files go to 'dist/'
     "esModuleInterop": true,     // ⬅️ Ensures compatibility with CommonJS packages
     "resolveJsonModule": true    // ⬅️ Allows importing .json files in backend
   },
-  "include": ["server/**/*"] // ⬅️ Ensures server code is included
+  "include": ["server/**/*.ts", "src/**/*.ts"],
+  "exclude": ["dist", "node_modules"]
 }
