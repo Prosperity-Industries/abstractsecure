@@ -11,12 +11,14 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { loadTestData } from '../../utils/tempTestData';
+import { loadTestData } from '@/utils/tempTestData';
+// import { loadTestData } from '../../src/utils/tempTestData';
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { formatSSN, validateSSN } from '../../utils/validation';
+import { formatSSN, validateSSN } from '@/utils/validation';
+// import { formatSSN, validateSSN } from '../../src/utils/validation';
 import { Button } from "@/components/ui/button";
 // import { uploadToGoogleDrive, initializeGoogleAuth } from '@/utils/googleDrive';
-import { uploadToGoogleDrive } from '@/utils/googleDrive';
+import { uploadToGoogleDrive } from '../../server/utils/googleDrive';
 import type { PhotoUploadResult } from '@/types';
 
 interface AdditionalParty {
@@ -166,9 +168,10 @@ const DataCollectionForm = () => {
     return () => window.removeEventListener('storage', handleStorageChange);
   }, [role]);
 
+  /* Function initializeGoogleAuth does not exist in the current scope.
   useEffect(() => {
     // Initialize Google Auth when component mounts
-    initializeGoogleAuth().catch(error => {
+    initializeGoogleAuth().catch((error: unknown) => {
       console.error('Error initializing Google Auth:', error);
       toast({
         title: "Error",
@@ -177,6 +180,8 @@ const DataCollectionForm = () => {
       });
     });
   }, []);
+  
+  */
 
   const totalSteps = 8;
 
