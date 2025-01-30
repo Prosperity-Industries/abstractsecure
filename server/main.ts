@@ -1,11 +1,8 @@
 console.log("Loading main.ts...");
 
-import app from './app';
+import { createServer } from './index';
 
 const PORT = process.env.PORT || 5000;
+const app = createServer();
 
-const startServer = () => {
-    app.listen(PORT, () => console.log(`Backend server is running on http://localhost:${PORT}`));
-};
-
-startServer();
+app.listen(PORT, () => console.log(`Backend server is running on http://localhost:${PORT}`));
