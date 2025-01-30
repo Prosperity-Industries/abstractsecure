@@ -11,9 +11,9 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { loadTestData } from '@/utils/tempTestData';
+import { loadTestData } from '../../utils/tempTestData';
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { formatSSN, validateSSN } from '@/utils/validation';
+import { formatSSN, validateSSN } from '../../utils/validation';
 import { Button } from "@/components/ui/button";
 import { uploadToGoogleDrive, initializeGoogleAuth } from '@/utils/googleDrive';
 import type { PhotoUploadResult } from '@/types';
