@@ -15,7 +15,7 @@ import { loadTestData } from '@/utils/tempTestData';
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { formatSSN, validateSSN } from '@/utils/validation';
 import { Button } from "@/components/ui/button";
-import { uploadToGoogleDrive, initializeGoogleAuth } from '@/utils/googleDrive';
+import { uploadToGoogleDrive, initializeGoogleAuth } from '../../server/utils/googleDrive';
 import type { PhotoUploadResult } from '@/types';
 
 interface AdditionalParty {
@@ -262,7 +262,7 @@ const DataCollectionForm = () => {
         // Using property_address to match snake_case convention
         const updatedFormData = {
           ...formData,
-          propertyAddress: data.property_address || data.Title || '',
+          propertyAddress: (data as { property_address?: string; Title?: string }).property_address || data.Title || '',
         };
         
         setFormData(updatedFormData);
@@ -454,7 +454,7 @@ const DataCollectionForm = () => {
         // Using property_address to match snake_case convention
         const updatedFormData = {
           ...formData,
-          propertyAddress: data.property_address || data.Title || '',
+          propertyAddress: (data as { property_address?: string; Title?: string }).property_address || data.Title || '',
         };
         
         setFormData(updatedFormData);
@@ -611,7 +611,7 @@ const DataCollectionForm = () => {
             [MARITAL_STATUS.WIDOWED.value]: MARITAL_STATUS.WIDOWED.id,
             [MARITAL_STATUS.DIVORCED.value]: MARITAL_STATUS.DIVORCED.id
           };
-          return statusMap[status.toLowerCase()] || MARITAL_STATUS.SINGLE.id;
+          return (statusMap as Record<string, number>)[status.toLowerCase()] || MARITAL_STATUS.SINGLE.id;
         };
 
         // Make final submission API call to webhook2
@@ -1031,7 +1031,7 @@ const DataCollectionForm = () => {
                   id="additionalPartyName"
                   name="name"
                   value={additionalParty.name}
-                  onChange={(e) => {
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
                     setAdditionalParty(prev => ({ ...prev, name: e.target.value }));
                   }}
                   placeholder="Enter full name"
@@ -1043,7 +1043,7 @@ const DataCollectionForm = () => {
                   id="additionalPartyPhone"
                   name="phone"
                   value={additionalParty.phone}
-                  onChange={(e) => {
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
                     setAdditionalParty(prev => ({ ...prev, phone: e.target.value }));
                   }}
                   placeholder="Enter phone number"
@@ -1056,7 +1056,7 @@ const DataCollectionForm = () => {
                   name="email"
                   type="email"
                   value={additionalParty.email}
-                  onChange={(e) => {
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
                     setAdditionalParty(prev => ({ ...prev, email: e.target.value }));
                   }}
                   placeholder="Enter email address"
@@ -1069,7 +1069,7 @@ const DataCollectionForm = () => {
                   name="dateOfBirth"
                   type="date"
                   value={additionalParty.dateOfBirth}
-                  onChange={(e) => {
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
                     setAdditionalParty(prev => ({ ...prev, dateOfBirth: e.target.value }));
                   }}
                 />
@@ -1082,7 +1082,7 @@ const DataCollectionForm = () => {
                   type="text"
                   maxLength={11}
                   value={additionalParty.ssn}
-                  onChange={(e) => {
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
                     try {
                       const input = e.target.value.replace(/[^\d-]/g, '');
                       const formattedSSN = formatSSN(input.replace(/-/g, ''));
@@ -1092,7 +1092,7 @@ const DataCollectionForm = () => {
                       setAdditionalParty(prev => ({ ...prev, ssn: cleanInput }));
                     }
                   }}
-                  onBlur={(e) => {
+                  onBlur={(e: React.ChangeEvent<HTMLInputElement>) => {
                     if (e.target.value && !validateSSN(e.target.value)) {
                       toast({
                         title: "Invalid SSN",
