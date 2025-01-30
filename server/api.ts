@@ -1,7 +1,7 @@
 console.log("Loading api.ts...");
 
 import { Router } from 'express';
-import { uploadToGoogleDrive } from './utils/googleDrive';
+import { uploadToGoogleDrive } from '@/utils/googleDrive';
 
 const router = Router();
 
