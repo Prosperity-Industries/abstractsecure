@@ -715,8 +715,9 @@ const DataCollectionForm = () => {
         // Upload to Google Drive
         const fileName = `${formData.fullName.replace(/\s+/g, '_')}_ID${file.name.substring(file.name.lastIndexOf('.'))}`;
         const mimeType = "application/pdf";
-        const url = await uploadToGoogleDrive(file, fileName, mimeType);
-        
+        const filePath = file.path || file.name;  // Ensure a string path
+        const url = await uploadToGoogleDrive(filePath, fileName, mimeType);
+
         // Update form data with URL
         setFormData(prev => ({ ...prev, photoIdUrl: url }));
         
@@ -745,8 +746,9 @@ const DataCollectionForm = () => {
         // Upload to Google Drive
         const fileName = `${additionalParty.name.replace(/\s+/g, '_')}_ID${file.name.substring(file.name.lastIndexOf('.'))}`;
         const mimeType = "application/pdf";
-        const url = await uploadToGoogleDrive(file, fileName, mimeType);
-        
+        const filePath = file.path || file.name;  // Ensure a string path
+        const url = await uploadToGoogleDrive(filePath, fileName, mimeType);
+
         // Update additional party data with URL
         setAdditionalParty(prev => ({ ...prev, photoIdUrl: url }));
         
