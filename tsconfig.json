@@ -7,17 +7,22 @@
   "compilerOptions": {
     "baseUrl": "./",
     "paths": {
-      "@/*": ["./src/*"]
+      "@/*": ["./src/*"],
+      "@/utils/*": ["./server/utils/*"]
     },
     "module": "ESNext",
     "moduleResolution": "Node",
     "target": "ESNext",
     "outDir": "dist",
-    "rootDir": "./server",
+    "rootDir": "./",  
     "strict": true,
     "esModuleInterop": true,
     "allowJs": true,
     "skipLibCheck": true,
     "resolveJsonModule": true
-  }
+  },
+  "include": [
+    "src",
+    "server"
+  ]
 }
