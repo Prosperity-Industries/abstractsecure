@@ -4,6 +4,7 @@
     "lib": ["ES2023", "dom"],
     "module": "ESNext",
     "skipLibCheck": true,
+    "composite": true,
     "moduleResolution": "Node",
     "allowImportingTsExtensions": true,
     "isolatedModules": true,
