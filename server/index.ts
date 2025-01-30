@@ -1,3 +1,5 @@
+console.log("Loading index.ts...");
+
 import express from 'express';
 import cors from 'cors';
 import apiRoutes from './api';
