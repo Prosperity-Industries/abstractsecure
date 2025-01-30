@@ -9,7 +9,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue, } from "
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { formatSSN, validateSSN } from '@/utils/validation';
 import { Button } from "@/components/ui/button";
-import { uploadToGoogleDrive, initializeGoogleAuth } from '@/utils/googleDrive';
+// import { uploadToGoogleDrive, initializeGoogleAuth } from '@/utils/googleDrive';
+import { uploadToGoogleDrive } from '@/utils/googleDrive';
+
 // Marital status constants
 const MARITAL_STATUS = {
     SINGLE: { value: 'single', id: 1 },
