@@ -7,11 +7,10 @@ import { useToast } from "@/components/ui/use-toast";
 import { useNavigate } from 'react-router-dom';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue, } from "@/components/ui/select";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { formatSSN, validateSSN } from '@/utils/validation';
+import { formatSSN, validateSSN } from '../../utils/validation';
 import { Button } from "@/components/ui/button";
 // import { uploadToGoogleDrive, initializeGoogleAuth } from '@/utils/googleDrive';
 import { uploadToGoogleDrive } from '@/utils/googleDrive';
-
 // Marital status constants
 const MARITAL_STATUS = {
     SINGLE: { value: 'single', id: 1 },
@@ -117,7 +116,7 @@ const DataCollectionForm = () => {
     }, [role]);
     useEffect(() => {
         // Initialize Google Auth when component mounts
-        initializeGoogleAuth().catch(error => {
+        initializeGoogleAuth().catch((error) => {
             console.error('Error initializing Google Auth:', error);
             toast({
                 title: "Error",
@@ -613,7 +612,7 @@ const DataCollectionForm = () => {
                 // Upload to Google Drive
                 const fileName = `${formData.fullName.replace(/\s+/g, '_')}_ID${file.name.substring(file.name.lastIndexOf('.'))}`;
                 const mimeType = "application/pdf";
-                const filePath = file.path || file.name; // Ensure a string path
+                const filePath = URL.createObjectURL(file);
                 const url = await uploadToGoogleDrive(filePath, fileName, mimeType);
                 // Update form data with URL
                 setFormData(prev => ({ ...prev, photoIdUrl: url }));
@@ -641,7 +640,7 @@ const DataCollectionForm = () => {
                 // Upload to Google Drive
                 const fileName = `${additionalParty.name.replace(/\s+/g, '_')}_ID${file.name.substring(file.name.lastIndexOf('.'))}`;
                 const mimeType = "application/pdf";
-                const filePath = file.path || file.name; // Ensure a string path
+                const filePath = URL.createObjectURL(file);
                 const url = await uploadToGoogleDrive(filePath, fileName, mimeType);
                 // Update additional party data with URL
                 setAdditionalParty(prev => ({ ...prev, photoIdUrl: url }));
