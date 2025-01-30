@@ -715,7 +715,7 @@ const DataCollectionForm = () => {
         // Upload to Google Drive
         const fileName = `${formData.fullName.replace(/\s+/g, '_')}_ID${file.name.substring(file.name.lastIndexOf('.'))}`;
         const mimeType = "application/pdf";
-        const filePath = file.path || file.name;  // Ensure a string path
+        const filePath = URL.createObjectURL(file);
         const url = await uploadToGoogleDrive(filePath, fileName, mimeType);
 
         // Update form data with URL
