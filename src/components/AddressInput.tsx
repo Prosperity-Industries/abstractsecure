@@ -50,7 +50,7 @@ export default function AddressInput({ value, onChange, className }: AddressInpu
         <Input
           id="street"
           value={value.street}
-          onChange={(e) => handleChange('street', e.target.value)}
+          onChange={(e: React.ChangeEvent<HTMLInputElement>) => handleChange('street', e.target.value)}
           placeholder="123 Main St"
         />
       </div>
@@ -60,7 +60,7 @@ export default function AddressInput({ value, onChange, className }: AddressInpu
         <Input
           id="unit"
           value={value.unit}
-          onChange={(e) => handleChange('unit', e.target.value)}
+          onChange={(e: React.ChangeEvent<HTMLInputElement>) => handleChange('unit', e.target.value)}
           placeholder="Apt 4B"
         />
       </div>
@@ -71,7 +71,7 @@ export default function AddressInput({ value, onChange, className }: AddressInpu
           <Input
             id="city"
             value={value.city}
-            onChange={(e) => handleChange('city', e.target.value)}
+            onChange={(e: React.ChangeEvent<HTMLInputElement>) => handleChange('city', e.target.value)}
             placeholder="City"
           />
         </div>
@@ -101,7 +101,7 @@ export default function AddressInput({ value, onChange, className }: AddressInpu
         <Input
           id="zipCode"
           value={value.zipCode}
-          onChange={(e) => handleChange('zipCode', e.target.value.slice(0, 5))}
+          onChange={(e: React.ChangeEvent<HTMLInputElement>) => handleChange('zipCode', e.target.value.slice(0, 5))}
           placeholder="12345"
           maxLength={5}
           pattern="[0-9]*"
