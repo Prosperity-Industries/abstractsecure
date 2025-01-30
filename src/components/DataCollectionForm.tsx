@@ -644,8 +644,8 @@ const DataCollectionForm = () => {
               "photo_id_url": party.photoIdUrl || ''
             }
           }), {});
-
-          webhookData.has_additional_parties = additionalPartiesData;
+          console.log(typeof additionalPartiesData, additionalPartiesData);
+          webhookData.has_additional_parties = !!additionalPartiesData;
         }
 
         const response = await fetch('https://hook.us2.make.com/xohysh3bqv211obzpo3uo3kb4bkjgtws', {
