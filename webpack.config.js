@@ -24,5 +24,9 @@ export default {
       },
     ],
   },
+  externals: {
+    'fs': 'commonjs fs',
+    'googleapis': 'commonjs googleapis'  // Prevent Webpack from bundling Node.js modules
+  },
   mode: 'development',
 };
