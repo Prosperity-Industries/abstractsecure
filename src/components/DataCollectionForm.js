@@ -1,17 +1,17 @@
 import { jsx as _jsx, jsxs as _jsxs } from "react/jsx-runtime";
 import React, { useState, useEffect } from 'react';
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import FormStep from './FormStep';
-import { useToast } from "@/components/ui/use-toast";
+import { Input } from "@/components/ui/input.js";
+import { Label } from "@/components/ui/label.js";
+import FormStep from './FormStep.js';
+import { useToast } from "@/components/ui/use-toast.js";
 import { useNavigate } from 'react-router-dom';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue, } from "@/components/ui/select";
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue, } from "@/components/ui/select.js";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group.js";
 // import { formatSSN, validateSSN } from '@/utils/validation';
-import { formatSSN, validateSSN } from '../../src/utils/validation';
-import { Button } from "@/components/ui/button";
+import { formatSSN, validateSSN } from '../../src/utils/validation.js';
+import { Button } from "@/components/ui/button.js";
 // import { uploadToGoogleDrive, initializeGoogleAuth } from '@/utils/googleDrive';
-import { uploadToGoogleDrive } from '../../server/utils/googleDrive';
+import { uploadToGoogleDrive } from '../../server/utils/googleDrive.js';
 // Marital status constants
 const MARITAL_STATUS = {
     SINGLE: { value: 'single', id: 1 },
