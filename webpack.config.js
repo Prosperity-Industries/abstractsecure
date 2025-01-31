@@ -28,5 +28,11 @@ export default {
     'fs': 'commonjs fs',
     'googleapis': 'commonjs googleapis'  // Prevent Webpack from bundling Node.js modules
   },
+  devServer: {
+    static: './dist',  // Serve the `dist` folder
+    port: 3000,        // Change this if needed
+    open: true,        // Automatically open browser
+    hot: true          // Enable Hot Module Replacement
+  },
   mode: 'development',
 };
