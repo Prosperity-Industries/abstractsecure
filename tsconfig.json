@@ -8,10 +8,12 @@
     "baseUrl": "./",
     "paths": {
       "@/*": ["src/*"],
-      "@/utils/*": ["server/utils/*"]
+      "@/utils/*": ["server/utils/*"],
+      "@/components/*": ["src/components/*"],
+      "@/components/ui/*": ["src/components/ui/*"]
     },
     "module": "ESNext",
-    "moduleResolution": "bundler",
+    "moduleResolution": "node",
     "target": "ESNext",
     "outDir": "dist",
     "rootDir": "./",
