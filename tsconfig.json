@@ -1,5 +1,5 @@
 {
-  "files": [],
+  "files": ["tailwind.config.ts"],
   "references": [
     { "path": "./tsconfig.app.json" },
     { "path": "./tsconfig.node.json" }
@@ -11,10 +11,10 @@
       "@/utils/*": ["server/utils/*"]
     },
     "module": "ESNext",
-    "moduleResolution": "Node",
+    "moduleResolution": "bundler",
     "target": "ESNext",
     "outDir": "dist",
-    "rootDir": "./",  
+    "rootDir": "./",
     "strict": true,
     "esModuleInterop": true,
     "allowJs": true,
@@ -23,6 +23,8 @@
   },
   "include": [
     "src",
-    "server"
-  ]
+    "server",
+    "tailwind.config.ts"
+  ],
+  "exclude": ["node_modules", "dist"]
 }
