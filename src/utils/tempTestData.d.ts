@@ -8,7 +8,7 @@ export declare const testFormData: {
     ssn: string;
     maritalStatus: string;
     hasAdditionalParties: string;
-    additionalParties: any[];
+    additionalParties: never[];
     interestedInPropertyManagement: string;
     interestedInInsuranceQuote: string;
 };
@@ -22,7 +22,7 @@ export declare const loadTestData: () => {
     ssn: string;
     maritalStatus: string;
     hasAdditionalParties: string;
-    additionalParties: any[];
+    additionalParties: never[];
     interestedInPropertyManagement: string;
     interestedInInsuranceQuote: string;
-};
+} | null;

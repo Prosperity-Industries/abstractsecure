@@ -10,7 +10,7 @@ type SidebarContext = {
     isMobile: boolean;
     toggleSidebar: () => void;
 };
-declare const SidebarContext: React.Context<SidebarContext>;
+declare const SidebarContext: React.Context<SidebarContext | null>;
 declare function useSidebar(): SidebarContext;
 declare const SidebarProvider: React.ForwardRefExoticComponent<Omit<React.ClassAttributes<HTMLDivElement> & React.HTMLAttributes<HTMLDivElement> & {
     defaultOpen?: boolean;
@@ -44,10 +44,10 @@ declare const SidebarMenuButton: React.ForwardRefExoticComponent<Omit<React.Clas
     asChild?: boolean;
     isActive?: boolean;
     tooltip?: string | React.ComponentProps<typeof TooltipContent>;
-} & VariantProps<(props?: {
-    variant?: "default" | "outline";
-    size?: "default" | "sm" | "lg";
-} & import("class-variance-authority/types").ClassProp) => string>, "ref"> & React.RefAttributes<HTMLButtonElement>>;
+} & VariantProps<(props?: ({
+    variant?: "default" | "outline" | null | undefined;
+    size?: "default" | "sm" | "lg" | null | undefined;
+} & import("class-variance-authority/dist/types").ClassProp) | undefined) => string>, "ref"> & React.RefAttributes<HTMLButtonElement>>;
 declare const SidebarMenuAction: React.ForwardRefExoticComponent<Omit<React.ClassAttributes<HTMLButtonElement> & React.ButtonHTMLAttributes<HTMLButtonElement> & {
     asChild?: boolean;
     showOnHover?: boolean;
