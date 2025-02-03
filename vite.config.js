@@ -14,6 +14,7 @@ export default defineConfig({
     },
     build: {
         rollupOptions: {
+            input: 'src/main.ts',
             external: [
                 "google-auth-library",
                 "fs",
@@ -36,6 +37,7 @@ export default defineConfig({
         "process.env": process.env,
         global: 'globalThis',
     },
+    publicDir: 'public',
     server: {
         fs: {
             strict: true
