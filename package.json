@@ -6,11 +6,11 @@
   "scripts": {
     "dev": "vite",
     "dev:server": "ts-node --esm server/main.ts",
-    "build": "webpack",
+    "build": "webpack --mode=production",
     "build:dev": "vite build --mode development",
     "lint": "eslint .",
     "preview": "vite preview",
-    "start": "serve -s dist -l 3000"
+    "start": "node server/main.js"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.9.0",
