@@ -25,11 +25,11 @@ WORKDIR /app
 # Copy only necessary files from the build stage
 COPY --from=build /app/package.json ./
 COPY --from=build /app/node_modules ./node_modules
-COPY --from=build /app/dist ./dist
-COPY --from=build /app/server ./server # Ensure the server files are included
+COPY --from=build /app/dist ./dist 
+COPY --from=build /app/server ./server 
 
 # Expose application port
 EXPOSE 3000
 
 # Start the backend server
-CMD ["node", "server/main.js"]
+CMD ["node", "server/main.mjs"]
