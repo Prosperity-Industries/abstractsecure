@@ -13,6 +13,7 @@ export default defineConfig({
         extensions: [".tsx", ".ts", ".jsx", ".js"],
     },
     build: {
+        outDir: 'dist',
         rollupOptions: {
             input: 'src/main.ts',
             external: [

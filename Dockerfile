@@ -22,6 +22,9 @@ FROM node:18-alpine AS production
 # Set working directory
 WORKDIR /app
 
+# Copy the public folder to the Docker image
+COPY public/ /app/public/
+
 # Copy only necessary files from the build stage
 COPY --from=build /app/package.json ./
 COPY --from=build /app/node_modules ./node_modules
@@ -29,7 +32,7 @@ COPY --from=build /app/dist ./dist
 COPY --from=build /app/server ./server 
 
 # Expose application port
-EXPOSE 3000
+EXPOSE 5000
 
 # Start the backend server
 CMD ["node", "server/main.mjs"]

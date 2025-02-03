@@ -8,7 +8,7 @@ const __dirname = path.dirname(__filename);
 export default {
   entry: './src/main.js',
   output: {
-    path: path.resolve(__dirname, 'dist'),
+    path: path.resolve(__dirname, 'public'),
     filename: 'bundle.js',
     clean: true, // Clears old files in dist/ but keeps generated index.html
   },

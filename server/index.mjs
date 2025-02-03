@@ -10,18 +10,21 @@ const createServer = () => {
     // Enable CORS
     app.use(cors());
 
-    // Serve static files from the public folder
-    app.use(express.static(path.join(process.cwd(), 'public'))); // ✅ Updated path handling for Node.js ESM
+    // Serve static assets (images) from 'public' under '/static'
+    app.use('/static', express.static(path.join(process.cwd(), 'public')));
+
+    // Serve frontend files (index.html, bundle.js) from 'dist'
+    app.use(express.static(path.join(process.cwd(), 'dist')));
+
+    // Catch-all route: Serve 'index.html' from 'dist' for all unknown requests
+    app.get('*', (req, res) => {
+        res.sendFile(path.join(process.cwd(), 'dist/index.html'));
+    });
 
     // API routes
     app.use('/api', apiRoutes);
 
-    // Catch-all route: Serve index.html **ONLY** for non-static requests
-    app.get('*', (req, res) => {
-        res.sendFile(path.join(process.cwd(), 'public/index.html')); // ✅ Updated path handling
-    });
-
     return app;
 };
 
-export { createServer }; // ✅ Ensure this export works with ESM
+export { createServer };
