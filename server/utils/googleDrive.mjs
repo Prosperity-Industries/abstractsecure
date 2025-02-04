@@ -1,4 +1,4 @@
-// server/utils/googleDrive.js
+// server/utils/googleDrive.mjs
 
 import { google } from 'googleapis';
 import fs from 'fs';

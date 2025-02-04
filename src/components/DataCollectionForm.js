@@ -608,25 +608,34 @@ const DataCollectionForm = () => {
         const file = event.target.files?.[0];
         if (file) {
             try {
-                // Create preview
+                // Create a preview
                 const preview = URL.createObjectURL(file);
                 setPhotoIdPreview(preview);
-                // Update form data with file
-                setFormData(prev => ({ ...prev, photoId: file }));
-                // Upload to Google Drive
-                const fileName = `${formData.fullName.replace(/\s+/g, '_')}_ID${file.name.substring(file.name.lastIndexOf('.'))}`;
-                const mimeType = "application/pdf";
-                const filePath = URL.createObjectURL(file);
-                const url = await uploadToGoogleDrive(filePath, fileName, mimeType);
-                // Update form data with URL
-                setFormData(prev => ({ ...prev, photoIdUrl: url }));
-                toast({
-                    title: "Photo ID Uploaded",
-                    description: "Your photo ID has been successfully uploaded to Google Drive.",
+    
+                // Prepare file for upload
+                const formData = new FormData();
+                formData.append("file", file);
+    
+                // Send file to backend
+                const response = await fetch("http://localhost:5000/upload", {
+                    method: "POST",
+                    body: formData,
                 });
-            }
-            catch (error) {
-                console.error('Error uploading photo ID:', error);
+    
+                const data = await response.json();
+    
+                if (response.ok) {
+                    // Store Google Drive file ID
+                    setFormData(prev => ({ ...prev, photoIdUrl: `https://drive.google.com/file/d/${data.fileId}/view` }));
+                    toast({
+                        title: "Upload Successful",
+                        description: "Your photo ID has been uploaded.",
+                    });
+                } else {
+                    throw new Error(data.error || "Upload failed.");
+                }
+            } catch (error) {
+                console.error("Error uploading photo ID:", error);
                 toast({
                     title: "Upload Error",
                     description: "Failed to upload photo ID. Please try again.",
@@ -635,6 +644,7 @@ const DataCollectionForm = () => {
             }
         }
     };
+    
     const handleAdditionalPartyPhotoIdUpload = async (event) => {
         const file = event.target.files?.[0];
         if (file) {
