@@ -15,7 +15,7 @@ export default defineConfig({
     build: {
         outDir: 'dist',
         rollupOptions: {
-            input: 'src/main.ts',
+            input: 'src/main.tsx',
             external: [
                 "google-auth-library",
                 "fs",
@@ -35,8 +35,8 @@ export default defineConfig({
         ]
     },
     define: {
-        "process.env": process.env,
-        global: 'globalThis',
+        'process.env.NODE_ENV': JSON.stringify(process.env.NODE_ENV),
+        'process.env.VITE_API_URL': JSON.stringify(process.env.VITE_API_URL),
     },
     publicDir: 'public',
     server: {

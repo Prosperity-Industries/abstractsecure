@@ -6,10 +6,10 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 export default {
-  entry: './src/main.js',
+  entry: './src/main.tsx',
   output: {
     path: path.resolve(__dirname, 'dist'),
-    publicPath: '/',
+    publicPath: './',
     filename: 'bundle.js',
     clean: true, // Clears old files in dist/ but keeps generated index.html
   },
