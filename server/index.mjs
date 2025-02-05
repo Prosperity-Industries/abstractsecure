@@ -4,7 +4,11 @@ console.log("Loading index.mjs...");
 import express from 'express';
 import cors from 'cors';
 import path from 'path';
+import { fileURLToPath } from 'url';
 import apiRoutes from './api.mjs'; 
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 const createServer = () => {
     const app = express();
@@ -13,8 +17,18 @@ const createServer = () => {
     app.use(cors());
     app.use(express.json());
 
-    // Serve static assets (images) from 'public' under '/static'
-    app.use('/static', express.static(path.join(process.cwd(), 'public')));
+    // ✅ Serve static frontend files (Webpack/Vite `dist/` folder)
+    app.use(express.static(path.join(__dirname, "../dist")));
+
+    // ✅ Serve `index.html` for the root `/`
+    app.get("/", (req, res) => {
+        res.sendFile(path.join(__dirname, "../dist", "index.html"));
+    });
+
+    // ✅ Redirect unknown routes to `index.html` (for SPAs)
+    app.get("*", (req, res) => {
+        res.sendFile(path.join(__dirname, "../dist", "index.html"));
+    });
 
     // API routes
     app.use('/api', apiRoutes);
