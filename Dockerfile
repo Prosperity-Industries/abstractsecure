@@ -32,7 +32,7 @@ COPY --from=build /app/dist ./dist
 COPY --from=build /app/server ./server 
 
 # Expose application port
-EXPOSE 5000
+EXPOSE 8080
 
 # Start the backend server
 CMD ["node", "server/main.mjs"]
