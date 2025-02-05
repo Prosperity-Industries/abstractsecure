@@ -6,7 +6,7 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 export default {
-  entry: './src/main.tsx',
+  entry: './src/main.js',
   output: {
     path: path.resolve(__dirname, 'dist'),
     publicPath: './',
@@ -17,12 +17,27 @@ export default {
     alias: {
       '@': path.resolve(__dirname, 'src') // Define the `@` alias correctly
     },
-    extensions: ['.js', '.jsx'], // Ensure Webpack checks for these file types
+    extensions: ['.tsx', '.ts', '.jsx', '.js'], // Ensure Webpack checks for these file types
   },
   module: {
     rules: [
       {
-        test: /\.css$/i,
+        test: /\.tsx?$/, // ✅ Tell Webpack to process TypeScript files
+        exclude: /node_modules/,
+        use: 'ts-loader',
+      },
+      {
+        test: /\.(js|jsx)$/, // ✅ Process JavaScript with Babel
+        exclude: /node_modules/,
+        use: {
+          loader: 'babel-loader',
+          options: {
+            presets: ['@babel/preset-env', '@babel/preset-react', '@babel/preset-typescript'],
+          },
+        },
+      },
+      {
+        test: /\.css$/i, // ✅ Process CSS files
         use: ['style-loader', 'css-loader', 'postcss-loader'],
       },
     ],
@@ -40,9 +55,9 @@ export default {
   },
   devServer: {
     static: './dist',  // Serve the `dist` folder
-    port: 3000,        // Change this if needed
+    port: 8080,        // Change this if needed
     open: true,        // Automatically open browser
     hot: true,         // Enable Hot Module Replacement
   },
-  mode: 'development',
+  mode: 'production',
 };
