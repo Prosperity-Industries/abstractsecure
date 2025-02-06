@@ -1,7 +1,7 @@
 import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
 import path from "path";
-//import commonjs from '@originjs/vite-plugin-commonjs';
+
 export default defineConfig({
     plugins: [react()],
     resolve: {
@@ -13,17 +13,10 @@ export default defineConfig({
         extensions: [".tsx", ".ts", ".jsx", ".js"],
     },
     build: {
-        outDir: 'dist',
+        outDir: "dist",
         rollupOptions: {
-            input: 'src/main.tsx',
-            external: [
-                "google-auth-library",
-                "fs",
-                "path",
-                "child_process",
-                "crypto"
-            ]
-        }
+            input: "index.html", // ✅ Ensures index.html is included in the build
+        },
     },
     optimizeDeps: {
         exclude: [
@@ -35,13 +28,16 @@ export default defineConfig({
         ]
     },
     define: {
-        'process.env.NODE_ENV': JSON.stringify(process.env.NODE_ENV),
-        'process.env.VITE_API_URL': JSON.stringify(process.env.VITE_API_URL),
+        "process.env.NODE_ENV": JSON.stringify(process.env.NODE_ENV),
+        "process.env.VITE_API_URL": JSON.stringify(process.env.VITE_API_URL),
     },
-    publicDir: 'public',
+    publicDir: "public", // ✅ Ensures static assets are copied
     server: {
         fs: {
             strict: true
-        }
-    }
+        },
+        mimeTypes: {
+            "js": "application/javascript",
+        },
+    },
 });
