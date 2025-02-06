@@ -17,7 +17,7 @@ export const testFormData = {
 };
 // Function to load test data (development only)
 export const loadTestData = () => {
-    if (process.env.NODE_ENV === 'development') {
+    if (import.meta.env.MODE === 'development') { // ✅ Fix for Vite
         return testFormData;
     }
     return null;

@@ -11,6 +11,8 @@ export const uploadToGoogleDrive = async (filePath, fileName, mimeType) => {
     try {
         console.log(`Uploading file: ${filePath}, Name: ${fileName}, Type: ${mimeType}`);
 
+/* ❌ Temporarily disable Google Drive upload logic */
+/*
         // Load service account credentials
         const auth = new google.auth.GoogleAuth({
             keyFile: process.env.SERVICE_ACCOUNT_FILE,  // From .env
@@ -41,6 +43,7 @@ export const uploadToGoogleDrive = async (filePath, fileName, mimeType) => {
         fs.unlinkSync(filePath);  // Remove temporary local file after upload
 
         return response.data.id;
+*/
     } catch (error) {
         throw new Error(`Google Drive upload failed: ${error.message}`);
     }
