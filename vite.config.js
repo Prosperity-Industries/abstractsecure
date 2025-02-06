@@ -16,27 +16,35 @@ export default defineConfig({
     build: {
         outDir: "dist",
         rollupOptions: {
-            input: "index.html", // ✅ Ensures index.html is included in the build
+            input: "index.html",
+            output: {
+                manualChunks(id) {
+                    if (id.includes("node_modules")) {
+                        return "vendor"; // ✅ Splits vendor dependencies into a separate file
+                    }
+                }
+            },
             external: [
-                'fs', 'path', 'os', 'crypto', 'stream', 'child_process', 'querystring', 'net', 'tls', 'zlib', 'http', 'https', 'url', 'buffer'
+                'fs', 'path', 'os', 'crypto', 'stream', 'child_process', 'querystring',
+                'net', 'tls', 'zlib', 'http', 'https', 'url', 'buffer'
             ]
         },
-        chunkSizeWarningLimit: 1500, // ✅ Prevents large bundle size warnings
+        chunkSizeWarningLimit: 1500,
     },
     optimizeDeps: {
         exclude: [
-            "google-auth-library", // ✅ Exclude backend-only module
+            "fs", "path", "child_process", "crypto"
         ]
     },
     define: {
-        "process.env": {},  // ✅ Prevents frontend errors when "process" is referenced
+        "process.env": {},  
         "process.env.NODE_ENV": JSON.stringify(process.env.NODE_ENV || "production"),
         "process.env.VITE_API_URL": JSON.stringify(process.env.VITE_API_URL || ""),
     },
-    publicDir: "public", // ✅ Ensures static assets are copied
+    publicDir: "public",
     server: {
         fs: {
-            allow: ["src", "public"], // ✅ Allows Vite to access necessary frontend files only
+            allow: ["src", "public"], 
         },
         mimeTypes: {
             "js": "application/javascript",

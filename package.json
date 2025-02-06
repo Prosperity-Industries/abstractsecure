@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "dev:server": "ts-node --esm server/main.ts",
+    "dev:server": "ts-node --esm server/main.mjs",
     "build": "vite build",
     "build:dev": "vite build --mode development",
     "lint": "eslint .",
@@ -87,19 +87,17 @@
     "@types/react-dom": "^18.3.0",
     "@vitejs/plugin-react": "^4.3.4",
     "@vitejs/plugin-react-swc": "^3.5.0",
+    "cors": "^2.8.5",
     "eslint": "^9.9.0",
     "eslint-plugin-react-hooks": "^5.1.0-rc.0",
     "eslint-plugin-react-refresh": "^0.4.9",
+    "express": "^4.21.2",
     "globals": "^15.9.0",
     "lovable-tagger": "^1.0.19",
+    "multer": "^1.4.5-lts.1",
     "postcss": "^8.4.47",
     "tailwindcss": "^3.4.17",
     "ts-node": "^10.9.2",
-    "vite": "^5.4.1",
-    "express": "^4.21.2",
-    "google-auth-library": "^9.15.1",
-    "googleapis": "^144.0.0",
-    "multer": "^1.4.5-lts.1",
-    "cors": "^2.8.5"
+    "vite": "^5.4.1"
   }
 }

@@ -17,8 +17,6 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 // import { formatSSN, validateSSN } from '@/utils/validation';
 import { formatSSN, validateSSN } from '../../src/utils/validation';
 import { Button } from "@/components/ui/button";
-// import { uploadToGoogleDrive, initializeGoogleAuth } from '@/utils/googleDrive';
-import { uploadToGoogleDrive } from '../../server/utils/googleDrive';
 import type { PhotoUploadResult } from '@/types';
 
 interface AdditionalParty {
@@ -167,21 +165,6 @@ const DataCollectionForm = () => {
     window.addEventListener('storage', handleStorageChange);
     return () => window.removeEventListener('storage', handleStorageChange);
   }, [role]);
-
-  /* Function initializeGoogleAuth does not exist in the current scope.
-  useEffect(() => {
-    // Initialize Google Auth when component mounts
-    initializeGoogleAuth().catch((error: unknown) => {
-      console.error('Error initializing Google Auth:', error);
-      toast({
-        title: "Error",
-        description: "Failed to initialize Google Drive integration. Some features may not work.",
-        variant: "destructive",
-      });
-    });
-  }, []);
-  
-  */
 
   const totalSteps = 8;
 
@@ -722,7 +705,6 @@ const DataCollectionForm = () => {
         const fileName = `${formData.fullName.replace(/\s+/g, '_')}_ID${file.name.substring(file.name.lastIndexOf('.'))}`;
         const mimeType = "application/pdf";
         const filePath = URL.createObjectURL(file);
-        const url = await uploadToGoogleDrive(filePath, fileName, mimeType);
 
         // Update form data with URL
         setFormData(prev => ({ ...prev, photoIdUrl: url }));
@@ -753,7 +735,6 @@ const DataCollectionForm = () => {
         const fileName = `${additionalParty.name.replace(/\s+/g, '_')}_ID${file.name.substring(file.name.lastIndexOf('.'))}`;
         const mimeType = "application/pdf";
         const filePath = URL.createObjectURL(file);
-        const url = await uploadToGoogleDrive(filePath, fileName, mimeType);
 
         // Update additional party data with URL
         setAdditionalParty(prev => ({ ...prev, photoIdUrl: url }));
@@ -793,7 +774,7 @@ const DataCollectionForm = () => {
     <div className="min-h-screen flex flex-col items-center justify-start p-4 bg-gradient-to-b from-blue-50 to-white">
       <div className="w-full max-w-2xl">
         <img 
-          src="/static/ProsperityAbstract-logo_1972x564.png" 
+          src="/ProsperityAbstract-logo_1972x564.png" 
           alt="Prosperity Abstract Logo" 
           className="w-64 mx-auto mb-8"
         />
