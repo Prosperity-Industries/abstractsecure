@@ -597,6 +597,7 @@ const DataCollectionForm = () => {
               interested_in_property_management: formData.interestedInPropertyManagement === "yes",
               interested_in_insurance_quote: formData.interestedInInsuranceQuote === "yes",
               photo_id_url: formData.photoIdUrl || "",
+              photo_id_base64: formData.photoIdBase64 || "",
           };
 
           console.log("Webhook Data being sent:", JSON.stringify(webhookData, null, 2));
@@ -654,37 +655,49 @@ const DataCollectionForm = () => {
   const isLastAdditionalParty = () => getCurrentPartyNumber() === MAX_ADDITIONAL_PARTIES;
 
   const handlePhotoIdUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (file) {
-      try {
-        // Create preview
-        const preview = URL.createObjectURL(file);
-        setPhotoIdPreview(preview);
-        
-        // Update form data with file
-        setFormData(prev => ({ ...prev, photoId: file }));
+      const file = event.target.files?.[0];
+      if (file) {
+          try {
+              // Create a preview URL for the uploaded file
+              const preview = URL.createObjectURL(file);
+              setPhotoIdPreview(preview);
 
-        // Upload to Google Drive
-        const fileName = `${formData.fullName.replace(/\s+/g, '_')}_ID${file.name.substring(file.name.lastIndexOf('.'))}`;
-        const mimeType = "application/pdf";
-        const filePath = URL.createObjectURL(file);
+              // Convert file to base64
+              const fileAsBase64 = await convertFileToBase64(file);
 
-        // Update form data with URL
-        setFormData(prev => ({ ...prev, photoIdUrl: url }));
-        
-        toast({
-          title: "Photo ID Uploaded",
-          description: "Your photo ID has been successfully uploaded to Google Drive.",
-        });
-      } catch (error) {
-        console.error('Error uploading photo ID:', error);
-        toast({
-          title: "Upload Error",
-          description: "Failed to upload photo ID. Please try again.",
-          variant: "destructive",
-        });
+              // Update the form data with the base64 string
+              setFormData(prev => ({ ...prev, photoId: file, photoIdBase64: fileAsBase64 }));
+
+              toast({
+                  title: "Photo ID Uploaded",
+                  description: "Your photo ID has been successfully added to the form.",
+              });
+          } catch (error) {
+              console.error("Error converting photo ID to base64:", error);
+              toast({
+                  title: "Error",
+                  description: "Failed to process the photo ID. Please try again.",
+                  variant: "destructive",
+              });
+          }
       }
-    }
+  };
+
+  /**
+   * Converts a file to a base64 string.
+   * @param file - The file to convert.
+   * @returns A promise resolving to the base64 string.
+   */
+  const convertFileToBase64 = (file: File): Promise<string> => {
+      return new Promise((resolve, reject) => {
+          const reader = new FileReader();
+          reader.onload = () => {
+              const result = reader.result as string;
+              resolve(result.split(",")[1]); // Remove the data type prefix
+          };
+          reader.onerror = (error) => reject(error);
+          reader.readAsDataURL(file);
+      });
   };
 
   const handleAdditionalPartyPhotoIdUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
