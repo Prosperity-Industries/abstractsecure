@@ -48,13 +48,14 @@ interface FormData {
   photoIdUrl?: string;
 }
 
-// Marital status constants
+// #region Marital status constants
 const MARITAL_STATUS = {
   SINGLE: { value: 'single', id: 1 },
   MARRIED: { value: 'married', id: 2 },
   WIDOWED: { value: 'widowed', id: 3 },
   DIVORCED: { value: 'divorced', id: 4 }
 } as const;
+// #endregion
 
 const DataCollectionForm = () => {
   const { toast } = useToast();
@@ -64,7 +65,7 @@ const DataCollectionForm = () => {
   // Always start at step 0 (title order number)
   const [currentStep, setCurrentStep] = useState(0);
 
-  // Clear any existing stored data on component mount
+  // #region Clear form
   useEffect(() => {
     localStorage.removeItem('formData');
     localStorage.removeItem('roleInTransaction');
@@ -89,6 +90,7 @@ const DataCollectionForm = () => {
       photoIdUrl: undefined
     };
   });
+  // #endregion
 
   const [addressConfirmation, setAddressConfirmation] = useState<'yes' | 'no' | null>(null);
 
@@ -112,6 +114,7 @@ const DataCollectionForm = () => {
   const fileInputRef = React.createRef<HTMLInputElement>();
   const additionalPartyFileInputRef = React.createRef<HTMLInputElement>();
 
+  // #region Browser history
   useEffect(() => {
     // Save form state to browser history
     const saveStateToHistory = () => {
@@ -166,8 +169,11 @@ const DataCollectionForm = () => {
     return () => window.removeEventListener('storage', handleStorageChange);
   }, [role]);
 
+  // #endregion
+
   const totalSteps = 8;
 
+  // #region SSN formatting
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
     
@@ -190,6 +196,7 @@ const DataCollectionForm = () => {
       setFormData(prev => ({ ...prev, [name]: value }));
     }
   };
+  // #endregion
 
   const handleSelectChange = (field: keyof FormData, value: string) => {
     setFormData(prev => {
@@ -210,6 +217,7 @@ const DataCollectionForm = () => {
   const handleNext = async () => {
     if (isSubmitting) return;
 
+    // #region STEP 0 (Title Order Number)
     // Handle the title order number step
     if (currentStep === 0) {
       if (!formData.titleFileNumber) {
@@ -230,6 +238,7 @@ const DataCollectionForm = () => {
           titleFileNumber: formData.titleFileNumber
         }));
 
+        // Send file number to webhook, wait for response
         const response = await fetch('https://hook.us2.make.com/kwq1swnwft87fv4fxclyxbq2x5wcu5pt', {
           method: 'POST',
           headers: {
@@ -270,7 +279,9 @@ const DataCollectionForm = () => {
       }
       return;
     }
+    // #endregion
 
+    // #region STEP 1 (Property Address)
     // Validate property address before proceeding from address confirmation
     if (currentStep === 1) {
       if (!formData.propertyAddress) {
@@ -298,7 +309,9 @@ const DataCollectionForm = () => {
         return;
       }
     }
+    // #endregion
 
+    // #region STEP 2 (Transaction Role)
     // Validate transaction role before proceeding
     if (currentStep === 2) {
       if (!formData.roleInTransaction) {
@@ -310,7 +323,9 @@ const DataCollectionForm = () => {
         return;
       }
     }
+    // #endregion
 
+    // #region STEP 4 (Additional Parties)
     // Check for additional party selection
     if (currentStep === 4) {
       if (!formData.hasAdditionalParties) {
@@ -342,6 +357,7 @@ const DataCollectionForm = () => {
       // Store additional party data in localStorage
       localStorage.setItem('additionalParty', JSON.stringify(additionalParty));
     }
+    // #endregion
 
     // For other steps, just proceed
     setCurrentStep(prev => prev + 1);
@@ -357,6 +373,7 @@ const DataCollectionForm = () => {
     }
   };
 
+  // #region Reset form and clear localStorage
   const resetForm = () => {
     // Clear form data
     const emptyForm = {
@@ -398,10 +415,12 @@ const DataCollectionForm = () => {
     localStorage.removeItem('formData');
     localStorage.removeItem('roleInTransaction');
   };
+  // #endregion
 
   const handleNextUpdated = async () => {
     if (isSubmitting) return;
 
+    // #region STEP 0 (Title Order Number)
     // Handle the title order number step
     if (currentStep === 0) {
       if (!formData.titleFileNumber) {
@@ -462,8 +481,10 @@ const DataCollectionForm = () => {
       }
       return;
     }
+    // #endregion
 
-    // Validate property address before proceeding from address confirmation
+    // #region STEP 1 (Validate property address)
+    // Validate property address
     if (currentStep === 1) {
       if (!formData.propertyAddress) {
         toast({
@@ -490,7 +511,9 @@ const DataCollectionForm = () => {
         return;
       }
     }
+    // #endregion
 
+    // #region STEP 2 (Role in Transaction)
     // Validate transaction role before proceeding
     if (currentStep === 2) {
       if (!formData.roleInTransaction) {
@@ -502,7 +525,9 @@ const DataCollectionForm = () => {
         return;
       }
     }
+    // #endregion
 
+    // #region STEP 4 (Additional Parties)
     // Check for additional party selection
     if (currentStep === 4) {
       if (!formData.hasAdditionalParties) {
@@ -520,7 +545,9 @@ const DataCollectionForm = () => {
         return;
       }
     }
+    // #endregion
 
+    // #region STEP 5 (Additional Party)
     // Check for additional party form validation
     if (currentStep === 5 && formData.hasAdditionalParties === 'yes') {
       if (!additionalParty.name) {
@@ -569,7 +596,9 @@ const DataCollectionForm = () => {
         return;
       }
     }
+    // #endregion
 
+    // #region STEP 7 (Final Submission)
     // Final submission step (step 7)
     if (currentStep === 7) {
       if (!formData.interestedInInsuranceQuote) {
@@ -645,6 +674,7 @@ const DataCollectionForm = () => {
       }
       return;
     }
+    // #endregion
     
     // For other steps, just proceed
     setCurrentStep(prev => prev + 1);
@@ -654,6 +684,7 @@ const DataCollectionForm = () => {
 
   const isLastAdditionalParty = () => getCurrentPartyNumber() === MAX_ADDITIONAL_PARTIES;
 
+  // #region Photo ID Upload
   const handlePhotoIdUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
       const file = event.target.files?.[0];
       if (file) {
@@ -682,6 +713,7 @@ const DataCollectionForm = () => {
           }
       }
   };
+  // #endregion
 
   /**
    * Converts a file to a base64 string.
@@ -700,6 +732,7 @@ const DataCollectionForm = () => {
       });
   };
 
+  // #region Additional Party Photo ID Upload
   const handleAdditionalPartyPhotoIdUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (file) {
@@ -729,6 +762,7 @@ const DataCollectionForm = () => {
       }
     }
   };
+  // #endregion
 
   const triggerFileInput = (isAdditionalParty: boolean = false) => {
     if (isAdditionalParty) {
