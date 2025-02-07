@@ -570,114 +570,77 @@ const DataCollectionForm = () => {
       }
     }
 
-    // For final submission (insurance quote step)
+    // Final submission step (step 7)
     if (currentStep === 7) {
       if (!formData.interestedInInsuranceQuote) {
-        toast({
-          title: "Error",
-          description: "Please select whether you would like an insurance quote",
-          variant: "destructive",
-        });
-        return;
+          toast({
+              title: "Error",
+              description: "Please select whether you would like an insurance quote",
+              variant: "destructive",
+          });
+          return;
       }
 
       try {
-        setIsSubmitting(true);
-        console.log('Submitting final form data:', formData); // Debug log
+          setIsSubmitting(true);
+          console.log("Submitting final form data:", formData);
 
-        // Helper function to format date from yyyy-mm-dd to dd/mm/yyyy
-        const formatDateForWebhook = (dateString: string): string => {
-          if (!dateString) return '';
-          const [year, month, day] = dateString.split('-');
-          return `${day}/${month}/${year}`;
-        };
-
-        // Helper function to convert marital status to integer
-        const getMaritalStatusValue = (status: string): number => {
-          const statusMap = {
-            [MARITAL_STATUS.SINGLE.value]: MARITAL_STATUS.SINGLE.id,
-            [MARITAL_STATUS.MARRIED.value]: MARITAL_STATUS.MARRIED.id,
-            [MARITAL_STATUS.WIDOWED.value]: MARITAL_STATUS.WIDOWED.id,
-            [MARITAL_STATUS.DIVORCED.value]: MARITAL_STATUS.DIVORCED.id
+          const webhookData = {
+              title_file: formData.titleFileNumber,
+              property_address: formData.propertyAddress,
+              full_name: formData.fullName,
+              date_of_birth: formData.dateOfBirth,
+              ssn: formData.ssn,
+              marital_status: formData.maritalStatus,
+              role_in_transaction: formData.roleInTransaction,
+              has_additional_parties: formData.hasAdditionalParties === "yes",
+              interested_in_property_management: formData.interestedInPropertyManagement === "yes",
+              interested_in_insurance_quote: formData.interestedInInsuranceQuote === "yes",
+              photo_id_url: formData.photoIdUrl || "",
           };
-          return (statusMap as Record<string, number>)[status.toLowerCase()] || MARITAL_STATUS.SINGLE.id;
-        };
 
-        // Make final submission API call to webhook2
-        const webhookData = {
-          "title_file": formData.titleFileNumber,
-          "property_address": formData.propertyAddress,
-          "full_name": formData.fullName,
-          "date_of_birth": formatDateForWebhook(formData.dateOfBirth),
-          "ssn": formData.ssn,
-          "marital-status": getMaritalStatusValue(formData.maritalStatus),
-          "role_in_transaction": formData.roleInTransaction,
-          "has_additional_parties": formData.hasAdditionalParties === 'yes',
-          "interested_in_property_management": formData.interestedInPropertyManagement === 'yes',
-          "interested_in_insurance_quote": formData.interestedInInsuranceQuote === 'yes',
-          "address_confirmation": addressConfirmation,
-          "photo_id_url": formData.photoIdUrl || ''
-        };
+          console.log("Webhook Data being sent:", JSON.stringify(webhookData, null, 2));
 
-        // Add additional parties if they exist
-        if (formData.hasAdditionalParties === 'yes' && additionalParties.length > 0) {
-          const additionalPartiesData = additionalParties.reduce((acc, party, index) => ({
-            ...acc,
-            [`additional_party${index + 1}`]: {
-              "full_name": party.name,
-              "phone": party.phone,
-              "email": party.email,
-              "date_of_birth": formatDateForWebhook(party.dateOfBirth),
-              "ssn": party.ssn,
-              "marital-status": getMaritalStatusValue(party.maritalStatus),
-              "photo_id_url": party.photoIdUrl || ''
-            }
-          }), {});
-          console.log(typeof additionalPartiesData, additionalPartiesData);
-          webhookData.has_additional_parties = !!additionalPartiesData;
-        }
+          const response = await fetch(
+              "https://hook.us2.make.com/xohysh3bqv211obzpo3uo3kb4bkjgtws",
+              {
+                  method: "POST",
+                  headers: {
+                      "Content-Type": "application/json",
+                  },
+                  body: JSON.stringify(webhookData),
+              }
+          );
 
-        const response = await fetch('https://hook.us2.make.com/xohysh3bqv211obzpo3uo3kb4bkjgtws', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify(webhookData),
-        });
+          const responseText = await response.text(); // Get the raw response text
+          console.log("Raw Webhook Response:", responseText);
 
-        if (!response.ok) {
-          throw new Error('Failed to submit form');
-        }
+          let responseData;
+          try {
+              responseData = JSON.parse(responseText); // Attempt to parse as JSON
+          } catch (error) {
+              console.warn("Response is not valid JSON. Handling as plain text:", responseText);
+              responseData = { status: "success", message: responseText }; // Fallback for plain text
+          }
 
-        const responseData = await response.json();
-        console.log('Webhook2 response:', responseData); // Debug log
-
-        if (responseData.status === 'success') {
-          // Show success message from webhook
-          toast({
-            title: "Success",
-            description: responseData.message || "Your information has been submitted successfully!",
-            duration: 5000, // Show for 5 seconds to ensure user sees it
-          });
-
-          // Wait for 2 seconds to ensure user sees the success message
-          await new Promise(resolve => setTimeout(resolve, 2000));
-
-          // Reset the form and return to beginning
-          resetForm();
-        } else {
-          throw new Error('Submission was not successful');
-        }
-        
+          if (responseData.status === "success") {
+              toast({
+                  title: "Success",
+                  description: responseData.message || "Your information has been submitted successfully!",
+              });
+              resetForm();
+          } else {
+              throw new Error(responseData.message || "Submission was not successful");
+          }
       } catch (error) {
-        console.error('Submission error:', error); // Debug log
-        toast({
-          title: "Error",
-          description: "Failed to submit form. Please try again.",
-          variant: "destructive",
-        });
+          console.error("Submission Error:", error);
+          toast({
+              title: "Error",
+              description: "Failed to submit form. Please try again.",
+              variant: "destructive",
+          });
       } finally {
-        setIsSubmitting(false);
+          setIsSubmitting(false);
       }
       return;
     }

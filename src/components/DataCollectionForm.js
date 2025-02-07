@@ -325,8 +325,8 @@ const DataCollectionForm = () => {
         localStorage.removeItem('roleInTransaction');
     };
     const handleNextUpdated = async () => {
-        if (isSubmitting)
-            return;
+        if (isSubmitting) return;
+    
         // Handle the title order number step
         if (currentStep === 0) {
             if (!formData.titleFileNumber) {
@@ -339,48 +339,56 @@ const DataCollectionForm = () => {
             }
             try {
                 setIsSubmitting(true);
-                // Save to localStorage before proceeding
-                localStorage.setItem('formData', JSON.stringify({
-                    ...formData,
-                    titleFileNumber: formData.titleFileNumber
-                }));
-                const response = await fetch('https://hook.us2.make.com/kwq1swnwft87fv4fxclyxbq2x5wcu5pt', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify({
-                        title_file: formData.titleFileNumber.trim()
-                    }),
-                });
+    
+                localStorage.setItem(
+                    "formData",
+                    JSON.stringify({
+                        ...formData,
+                        titleFileNumber: formData.titleFileNumber,
+                    })
+                );
+    
+                const response = await fetch(
+                    "https://hook.us2.make.com/kwq1swnwft87fv4fxclyxbq2x5wcu5pt",
+                    {
+                        method: "POST",
+                        headers: {
+                            "Content-Type": "application/json",
+                        },
+                        body: JSON.stringify({
+                            title_file: formData.titleFileNumber.trim(),
+                        }),
+                    }
+                );
+    
                 if (!response.ok) {
-                    throw new Error('Failed to fetch data');
+                    throw new Error("Failed to fetch data");
                 }
+    
                 const data = await response.json();
-                console.log('Webhook response:', data); // Add logging to see response structure
-                // Update form data with the received property address
-                // Using property_address to match snake_case convention
+                console.log("Webhook response (step 0):", data);
+    
                 const updatedFormData = {
                     ...formData,
-                    propertyAddress: data.property_address || data.Title || '',
+                    propertyAddress: data.property_address || data.Title || "",
                 };
                 setFormData(updatedFormData);
-                // Save the updated form data including property address
-                localStorage.setItem('formData', JSON.stringify(updatedFormData));
-                setCurrentStep(prev => prev + 1);
-            }
-            catch (error) {
+    
+                localStorage.setItem("formData", JSON.stringify(updatedFormData));
+                setCurrentStep((prev) => prev + 1);
+            } catch (error) {
+                console.error("Error in step 0:", error);
                 toast({
                     title: "Error",
                     description: "Failed to fetch property information. Please try again.",
                     variant: "destructive",
                 });
-            }
-            finally {
+            } finally {
                 setIsSubmitting(false);
             }
             return;
         }
+    
         // Validate property address before proceeding from address confirmation
         if (currentStep === 1) {
             if (!formData.propertyAddress) {
@@ -399,7 +407,7 @@ const DataCollectionForm = () => {
                 });
                 return;
             }
-            if (addressConfirmation === 'no') {
+            if (addressConfirmation === "no") {
                 toast({
                     title: "Error",
                     description: "Please contact support to correct the property address",
@@ -408,81 +416,8 @@ const DataCollectionForm = () => {
                 return;
             }
         }
-        // Validate transaction role before proceeding
-        if (currentStep === 2) {
-            if (!formData.roleInTransaction) {
-                toast({
-                    title: "Error",
-                    description: "Please select your role in the transaction",
-                    variant: "destructive",
-                });
-                return;
-            }
-        }
-        // Check for additional party selection
-        if (currentStep === 4) {
-            if (!formData.hasAdditionalParties) {
-                toast({
-                    title: "Error",
-                    description: "Please select whether there are additional parties",
-                    variant: "destructive",
-                });
-                return;
-            }
-            // If they selected no, skip the additional party form
-            if (formData.hasAdditionalParties === 'no') {
-                setCurrentStep(prev => prev + 2); // Skip to property management
-                return;
-            }
-        }
-        // Check for additional party form validation
-        if (currentStep === 5 && formData.hasAdditionalParties === 'yes') {
-            if (!additionalParty.name) {
-                toast({
-                    title: "Error",
-                    description: "Please enter the additional party's name",
-                    variant: "destructive",
-                });
-                return;
-            }
-            // Store the current additional party data
-            const updatedParties = [...additionalParties];
-            if (currentPartyIndex < updatedParties.length) {
-                updatedParties[currentPartyIndex] = additionalParty;
-            }
-            else {
-                updatedParties.push(additionalParty);
-            }
-            setAdditionalParties(updatedParties);
-            // If this is the last additional party, move to property management
-            if (getCurrentPartyNumber() === MAX_ADDITIONAL_PARTIES) {
-                setCurrentStep(prev => prev + 1);
-                return;
-            }
-            // Check if there are more parties to add
-            if (additionalParty.hasMoreParties === 'yes') {
-                // Reset the form for the next party
-                setCurrentPartyIndex(prev => prev + 1);
-                setAdditionalParty({
-                    name: '',
-                    phone: '',
-                    email: '',
-                    dateOfBirth: '',
-                    ssn: '',
-                    maritalStatus: '',
-                    hasMoreParties: '',
-                    photoId: undefined,
-                    photoIdUrl: undefined
-                });
-                return; // Stay on the same step but with clean form
-            }
-            else {
-                // No more parties, move to property management
-                setCurrentStep(prev => prev + 1);
-                return;
-            }
-        }
-        // For final submission (insurance quote step)
+    
+        // Final submission step (step 7)
         if (currentStep === 7) {
             if (!formData.interestedInInsuranceQuote) {
                 toast({
@@ -492,102 +427,85 @@ const DataCollectionForm = () => {
                 });
                 return;
             }
+
             try {
                 setIsSubmitting(true);
-                console.log('Submitting final form data:', formData); // Debug log
-                // Helper function to format date from yyyy-mm-dd to dd/mm/yyyy
-                const formatDateForWebhook = (dateString) => {
-                    if (!dateString)
-                        return '';
-                    const [year, month, day] = dateString.split('-');
-                    return `${day}/${month}/${year}`;
-                };
-                // Helper function to convert marital status to integer
-                const getMaritalStatusValue = (status) => {
-                    const statusMap = {
-                        [MARITAL_STATUS.SINGLE.value]: MARITAL_STATUS.SINGLE.id,
-                        [MARITAL_STATUS.MARRIED.value]: MARITAL_STATUS.MARRIED.id,
-                        [MARITAL_STATUS.WIDOWED.value]: MARITAL_STATUS.WIDOWED.id,
-                        [MARITAL_STATUS.DIVORCED.value]: MARITAL_STATUS.DIVORCED.id
-                    };
-                    return statusMap[status.toLowerCase()] || MARITAL_STATUS.SINGLE.id;
-                };
-                // Make final submission API call to webhook2
+
+                console.log("Form Data before submission:", JSON.stringify(formData, null, 2));
+
                 const webhookData = {
-                    "title_file": formData.titleFileNumber,
-                    "property_address": formData.propertyAddress,
-                    "full_name": formData.fullName,
-                    "date_of_birth": formatDateForWebhook(formData.dateOfBirth),
-                    "ssn": formData.ssn,
-                    "marital-status": getMaritalStatusValue(formData.maritalStatus),
-                    "role_in_transaction": formData.roleInTransaction,
-                    "has_additional_parties": formData.hasAdditionalParties === 'yes',
-                    "interested_in_property_management": formData.interestedInPropertyManagement === 'yes',
-                    "interested_in_insurance_quote": formData.interestedInInsuranceQuote === 'yes',
-                    "address_confirmation": addressConfirmation,
-                    "photo_id_url": formData.photoIdUrl || ''
+                    title_file: formData.titleFileNumber,
+                    property_address: formData.propertyAddress,
+                    full_name: formData.fullName,
+                    date_of_birth: formData.dateOfBirth,
+                    ssn: formData.ssn,
+                    marital_status: formData.maritalStatus,
+                    role_in_transaction: formData.roleInTransaction,
+                    has_additional_parties: formData.hasAdditionalParties === "yes",
+                    interested_in_property_management: formData.interestedInPropertyManagement === "yes",
+                    interested_in_insurance_quote: formData.interestedInInsuranceQuote === "yes",
+                    photo_id_url: formData.photoIdUrl || "",
                 };
-                // Add additional parties if they exist
-                if (formData.hasAdditionalParties === 'yes' && additionalParties.length > 0) {
-                    const additionalPartiesData = additionalParties.reduce((acc, party, index) => ({
-                        ...acc,
-                        [`additional_party${index + 1}`]: {
-                            "full_name": party.name,
-                            "phone": party.phone,
-                            "email": party.email,
-                            "date_of_birth": formatDateForWebhook(party.dateOfBirth),
-                            "ssn": party.ssn,
-                            "marital-status": getMaritalStatusValue(party.maritalStatus),
-                            "photo_id_url": party.photoIdUrl || ''
-                        }
-                    }), {});
-                    console.log(typeof additionalPartiesData, additionalPartiesData);
-                    webhookData.has_additional_parties = !!additionalPartiesData;
+
+                console.log("Webhook Data being sent:", JSON.stringify(webhookData, null, 2));
+
+                const response = await fetch(
+                    "https://hook.us2.make.com/xohysh3bqv211obzpo3uo3kb4bkjgtws",
+                    {
+                        method: "POST",
+                        headers: {
+                            "Content-Type": "application/json",
+                        },
+                        body: JSON.stringify(webhookData),
+                    }
+                );
+
+                // Log raw response text to debug the issue
+                const responseText = await response.text();
+                console.log("Raw Webhook Response:", responseText);
+
+                // Handle non-JSON responses gracefully
+                let responseData;
+                try {
+                    responseData = JSON.parse(responseText);
+                } catch (error) {
+                    console.error("Response is not valid JSON:", responseText);
+                    toast({
+                        title: "Unexpected Response",
+                        description: "Received an unexpected response from the server. Please contact support.",
+                        variant: "destructive",
+                    });
+                    return;
                 }
-                const response = await fetch('https://hook.us2.make.com/xohysh3bqv211obzpo3uo3kb4bkjgtws', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify(webhookData),
-                });
-                if (!response.ok) {
-                    throw new Error('Failed to submit form');
-                }
-                const responseData = await response.json();
-                console.log('Webhook2 response:', responseData); // Debug log
-                if (responseData.status === 'success') {
-                    // Show success message from webhook
+
+                console.log("Webhook response (final):", responseData);
+
+                if (responseData.status === "success") {
                     toast({
                         title: "Success",
-                        description: responseData.message || "Your information has been submitted successfully!",
-                        duration: 5000, // Show for 5 seconds to ensure user sees it
+                        description: "Your information has been submitted successfully!",
                     });
-                    // Wait for 2 seconds to ensure user sees the success message
-                    await new Promise(resolve => setTimeout(resolve, 2000));
-                    // Reset the form and return to beginning
                     resetForm();
+                } else {
+                    throw new Error(responseData.message || "Submission was not successful");
                 }
-                else {
-                    throw new Error('Submission was not successful');
-                }
-            }
-            catch (error) {
-                console.error('Submission error:', error); // Debug log
+            } catch (error) {
+                console.error("Submission Error:", error);
                 toast({
                     title: "Error",
                     description: "Failed to submit form. Please try again.",
                     variant: "destructive",
                 });
-            }
-            finally {
+            } finally {
                 setIsSubmitting(false);
             }
             return;
         }
+    
         // For other steps, just proceed
-        setCurrentStep(prev => prev + 1);
+        setCurrentStep((prev) => prev + 1);
     };
+    
     const getCurrentPartyNumber = () => currentPartyIndex + 1;
     const isLastAdditionalParty = () => getCurrentPartyNumber() === MAX_ADDITIONAL_PARTIES;
     const handlePhotoIdUpload = async (event) => {

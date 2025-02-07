@@ -17,17 +17,18 @@ const createServer = () => {
     app.use(cors());
     app.use(express.json());
 
-    // ✅ Serve static frontend files (Webpack/Vite `dist/` folder)
+    // ✅ Serve static frontend files
     app.use(express.static(path.join(__dirname, "../dist")));
+    app.use(express.static(path.join(__dirname, "../public")));
 
     // ✅ Serve `index.html` for the root `/`
     app.get("/", (req, res) => {
-        res.sendFile(path.join(__dirname, "../dist", "index.html"));
+        res.sendFile(path.join(__dirname, "../dist/index.html"));
     });
 
     // ✅ Redirect unknown routes to `index.html` (for SPAs)
     app.get("*", (req, res) => {
-        res.sendFile(path.join(__dirname, "../dist", "index.html"));
+        res.sendFile(path.join(__dirname, "../dist/index.html"));
     });
 
     // API routes
