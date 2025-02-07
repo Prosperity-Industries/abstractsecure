@@ -31,6 +31,9 @@ COPY --from=build /app/node_modules ./node_modules
 COPY --from=build /app/dist ./dist 
 COPY --from=build /app/server ./server 
 
+# Set environment variable to ensure the app uses the correct port
+ENV PORT=8080
+
 # Expose application port
 EXPOSE 8080
 
