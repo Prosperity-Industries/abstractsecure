@@ -38,4 +38,4 @@ ENV PORT=8080
 EXPOSE 8080
 
 # Start the backend server
-CMD ["node", "server/main.mjs"]
+CMD ["npm", "run", "start"]

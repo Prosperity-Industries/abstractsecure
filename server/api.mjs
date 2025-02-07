@@ -4,7 +4,6 @@ console.log("Loading api.mjs...");
 
 import { Router } from 'express';
 import multer from 'multer';
-import { uploadToGoogleDrive } from './utils/googleDrive.mjs';
 
 const router = Router();
 
